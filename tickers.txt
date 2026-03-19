@@ -1,0 +1,512 @@
+# Major US Index Tickers
+# Sources: Dow Jones (slickcharts.com), S&P 500 (stockanalysis.com), Nasdaq-100 (slickcharts.com)
+# Last updated: 2026-03-19
+#
+# Tickers are deduplicated across indices — each stock appears only once.
+# Sections indicate the highest-priority index a ticker belongs to.
+#
+# NOTE: BRK.B and BF.B use dot notation as listed officially.
+#       yfinance also accepts BRK-B / BF-B if you encounter issues.
+# NOTE: Running the full list (~640 tickers) through the LLM pipeline is
+#       very expensive and slow. Consider trimming to a focused watchlist.
+#
+# Usage: tradingagents analyze-portfolio --file tickers.txt
+
+# ============================================================
+# DOW JONES INDUSTRIAL AVERAGE (30 components)
+# ============================================================
+AAPL    # Apple
+AMGN    # Amgen
+AMZN    # Amazon
+AXP     # American Express
+BA      # Boeing
+CAT     # Caterpillar
+CRM     # Salesforce
+CSCO    # Cisco
+CVX     # Chevron
+DIS     # Walt Disney
+GS      # Goldman Sachs
+HD      # Home Depot
+HON     # Honeywell
+IBM     # IBM
+JNJ     # Johnson & Johnson
+JPM     # JPMorgan Chase
+KO      # Coca-Cola
+MCD     # McDonald's
+MMM     # 3M
+MRK     # Merck
+MSFT    # Microsoft
+NKE     # Nike
+NVDA    # Nvidia
+PG      # Procter & Gamble
+SHW     # Sherwin-Williams
+TRV     # Travelers
+UNH     # UnitedHealth
+V       # Visa
+VZ      # Verizon
+WMT     # Walmart
+
+# ============================================================
+# S&P 500 (additional components not in DJIA, ~470 stocks)
+# ============================================================
+A       # Agilent Technologies
+ABBV    # AbbVie
+ABT     # Abbott Laboratories
+ACN     # Accenture
+ADBE    # Adobe
+ADI     # Analog Devices
+ADM     # Archer-Daniels-Midland
+ADP     # Automatic Data Processing
+ADSK    # Autodesk
+AEE     # Ameren
+AEP     # American Electric Power
+AES     # AES Corporation
+AIG     # American International Group
+AIZ     # Assurant
+AJG     # Arthur J. Gallagher
+AKAM    # Akamai Technologies
+ALB     # Albemarle
+ALGN    # Align Technology
+ALL     # Allstate
+ALLE    # Allegion
+AMD     # Advanced Micro Devices
+AME     # AMETEK
+AMCR    # Amcor
+AMP     # Ameriprise Financial
+AMT     # American Tower
+ANET    # Arista Networks
+AON     # Aon
+APD     # Air Products
+APH     # Amphenol
+APO     # Apollo Global Management
+APP     # Applovin
+APA     # APA Corporation
+APTV    # Aptiv
+ARE     # Alexandria Real Estate
+ARES    # Ares Management
+ATO     # Atmos Energy
+AVB     # AvalonBay Communities
+AVY     # Avery Dennison
+AWK     # American Water Works
+AXON    # Axon Enterprise
+AZO     # AutoZone
+BALL    # Ball Corporation
+BAC     # Bank of America
+BAX     # Baxter International
+BBY     # Best Buy
+BDX     # Becton Dickinson
+BEN     # Franklin Resources
+BG      # Bunge Global
+BIIB    # Biogen
+BK      # Bank of New York Mellon
+BKR     # Baker Hughes
+BLDR    # Builders FirstSource
+BLK     # BlackRock
+BMY     # Bristol-Myers Squibb
+BKNG    # Booking Holdings
+BR      # Broadridge Financial
+BRK.B   # Berkshire Hathaway B
+BRO     # Brown & Brown
+BSX     # Boston Scientific
+BX      # Blackstone
+BXP     # Boston Properties
+BF.B    # Brown-Forman B
+C       # Citigroup
+CAG     # Conagra Brands
+CAH     # Cardinal Health
+CARR    # Carrier Global
+CB      # Chubb
+CBOE    # Cboe Global Markets
+CBRE    # CBRE Group
+CCI     # Crown Castle
+CCL     # Carnival
+CDNS    # Cadence Design Systems
+CDW     # CDW Corporation
+CEG     # Constellation Energy
+CF      # CF Industries
+CFG     # Citizens Financial
+CHD     # Church & Dwight
+CHTR    # Charter Communications
+CI      # Cigna
+CIEN    # Ciena
+CINF    # Cincinnati Financial
+CL      # Colgate-Palmolive
+CLX     # Clorox
+CME     # CME Group
+CMG     # Chipotle Mexican Grill
+CMI     # Cummins
+CMS     # CMS Energy
+CNC     # Centene
+CNP     # CenterPoint Energy
+COF     # Capital One
+COIN    # Coinbase
+COO     # Cooper Companies
+COP     # ConocoPhillips
+COR     # Cencora
+COST    # Costco
+CPB     # Campbell Soup
+CPAY    # Corpay
+CPRT    # Copart
+CPT     # Camden Property Trust
+CRH     # CRH plc
+CRL     # Charles River Labs
+CRWD    # CrowdStrike
+CSX     # CSX Corporation
+CSGP    # CoStar Group
+CTSH    # Cognizant
+CTVA    # Corteva
+CVNA    # Carvana
+CVS     # CVS Health
+D       # Dominion Energy
+DAL     # Delta Air Lines
+DASH    # DoorDash
+DD      # DuPont
+DE      # Deere & Company
+DECK    # Deckers Outdoor
+DELL    # Dell Technologies
+DG      # Dollar General
+DHI     # D.R. Horton
+DHR     # Danaher
+DLR     # Digital Realty
+DLTR    # Dollar Tree
+DOC     # Healthpeak Properties
+DOV     # Dover Corporation
+DOW     # Dow Inc.
+DPZ     # Domino's Pizza
+DRI     # Darden Restaurants
+DTE     # DTE Energy
+DUK     # Duke Energy
+DVA     # DaVita
+DVN     # Devon Energy
+DXCM    # Dexcom
+EA      # Electronic Arts
+EBAY    # eBay
+ECL     # Ecolab
+ED      # Consolidated Edison
+EFX     # Equifax
+EG      # Everest Group
+EIX     # Edison International
+EL      # Estee Lauder
+ELV     # Elevance Health
+EME     # EMCOR Group
+EMR     # Emerson Electric
+EOG     # EOG Resources
+EPAM    # EPAM Systems
+EQR     # Equity Residential
+EQT     # EQT Corporation
+EQIX    # Equinix
+ERIE    # Erie Indemnity
+ES      # Eversource Energy
+ESS     # Essex Property Trust
+ETN     # Eaton
+ETR     # Entergy
+EW      # Edwards Lifesciences
+EXC     # Exelon
+EXE     # Expand Energy
+EXPE    # Expedia
+EXR     # Extra Space Storage
+F       # Ford Motor
+FANG    # Diamondback Energy
+FAST    # Fastenal
+FDS     # FactSet Research
+FDX     # FedEx
+FE      # FirstEnergy
+FFIV    # F5 Networks
+FICO    # Fair Isaac
+FISV    # Fiserv
+FIS     # Fidelity National Info Services
+FITB    # Fifth Third Bancorp
+FIX     # Comfort Systems
+FSLR    # First Solar
+FRT     # Federal Realty Investment
+FTNT    # Fortinet
+FTV     # Fortive
+FCX     # Freeport-McMoRan
+FOX     # Fox Corporation B
+FOXA    # Fox Corporation A
+GD      # General Dynamics
+GDDY    # GoDaddy
+GEHC    # GE HealthCare
+GEN     # Gen Digital
+GEV     # GE Vernova
+GILD    # Gilead Sciences
+GIS     # General Mills
+GL      # Globe Life
+GLW     # Corning
+GM      # General Motors
+GNRC    # Generac
+GOOGL   # Alphabet A
+GOOG    # Alphabet C
+GPC     # Genuine Parts
+GPN     # Global Payments
+GRMN    # Garmin
+GWW     # W.W. Grainger
+HAL     # Halliburton
+HAS     # Hasbro
+HCA     # HCA Healthcare
+HIG     # Hartford Financial
+HII     # Huntington Ingalls
+HLT     # Hilton Worldwide
+HOLX    # Hologic
+HOOD    # Robinhood Markets
+HPE     # Hewlett Packard Enterprise
+HPQ     # HP Inc.
+HRL     # Hormel Foods
+HSIC    # Henry Schein
+HST     # Host Hotels
+HSY     # Hershey
+HUBB    # Hubbell
+HUM     # Humana
+HWM     # Howmet Aerospace
+HBAN    # Huntington Bancshares
+ICE     # Intercontinental Exchange
+IDXX    # IDEXX Laboratories
+IEX     # IDEX Corporation
+IFF     # International Flavors
+IQV     # IQVIA Holdings
+IR      # Ingersoll Rand
+IRM     # Iron Mountain
+ISRG    # Intuitive Surgical
+IT      # Gartner
+ITW     # Illinois Tool Works
+IBKR    # Interactive Brokers
+INCY    # Incyte
+INTC    # Intel
+INTU    # Intuit
+INVH    # Invitation Homes
+IP      # International Paper
+IVZ     # Invesco
+J       # Jacobs Solutions
+JBHT    # J.B. Hunt Transport
+JBL     # Jabil
+JCI     # Johnson Controls
+JKHY    # Jack Henry & Associates
+KEY     # KeyCorp
+KEYS    # Keysight Technologies
+KDP     # Keurig Dr Pepper
+KHC     # Kraft Heinz
+KIM     # Kimco Realty
+KKR     # KKR & Co.
+KMB     # Kimberly-Clark
+KMI     # Kinder Morgan
+KR      # Kroger
+KVUE    # Kenvue
+L       # Loews
+LDOS    # Leidos Holdings
+LEN     # Lennar
+LH      # Labcorp
+LHX     # L3Harris Technologies
+LII     # Lennox International
+LIN     # Linde
+LLY     # Eli Lilly
+LMT     # Lockheed Martin
+LNT     # Alliant Energy
+LOW     # Lowe's
+LRCX    # Lam Research
+LULU    # Lululemon
+LUV     # Southwest Airlines
+LVS     # Las Vegas Sands
+LW      # Lamb Weston
+LYB     # LyondellBasell
+LYV     # Live Nation
+MA      # Mastercard
+MAA     # Mid-America Apartment
+MAR     # Marriott International
+MAS     # Masco
+MCK     # McKesson
+MCO     # Moody's
+MCHP    # Microchip Technology
+MDLZ    # Mondelez International
+MDT     # Medtronic
+META    # Meta Platforms
+MET     # MetLife
+MGM     # MGM Resorts
+MKC     # McCormick
+MLM     # Martin Marietta Materials
+MNST    # Monster Beverage
+MO      # Altria Group
+MOH     # Molina Healthcare
+MOS     # Mosaic
+MPC     # Marathon Petroleum
+MPWR    # Monolithic Power Systems
+MRNA    # Moderna
+MS      # Morgan Stanley
+MSCI    # MSCI Inc.
+MSI     # Motorola Solutions
+MTCH    # Match Group
+MTB     # M&T Bank
+MTD     # Mettler-Toledo
+MU      # Micron Technology
+NCLH    # Norwegian Cruise Line
+NDAQ    # Nasdaq Inc.
+NDSN    # Nordson
+NEE     # NextEra Energy
+NEM     # Newmont
+NI      # NiSource
+NRG     # NRG Energy
+NSC     # Norfolk Southern
+NTAP    # NetApp
+NTRS    # Northern Trust
+NUE     # Nucor
+NVR     # NVR Inc.
+NWSA    # News Corp A
+NWS     # News Corp B
+NXPI    # NXP Semiconductors
+O       # Realty Income
+ODFL    # Old Dominion Freight
+OKE     # ONEOK
+OMC     # Omnicom
+ON      # ON Semiconductor
+ORCL    # Oracle
+ORLY    # O'Reilly Automotive
+OTIS    # Otis Worldwide
+OXY     # Occidental Petroleum
+PANW    # Palo Alto Networks
+PAYC    # Paycom Software
+PAYX    # Paychex
+PCG     # PG&E
+PCAR    # PACCAR
+PEG     # Public Service Enterprise
+PEP     # PepsiCo
+PFE     # Pfizer
+PFG     # Principal Financial
+PH      # Parker Hannifin
+PHM     # PulteGroup
+PKG     # Packaging Corp of America
+PLD     # Prologis
+PLTR    # Palantir
+PM      # Philip Morris
+PNC     # PNC Financial
+PNR     # Pentair
+PNW     # Pinnacle West Capital
+PODD    # Insulet
+POOL    # Pool Corporation
+PPG     # PPG Industries
+PPL     # PPL Corporation
+PRU     # Prudential Financial
+PSA     # Public Storage
+PSX     # Phillips 66
+PTC     # PTC Inc.
+PYPL    # PayPal
+QCOM    # Qualcomm
+RCL     # Royal Caribbean
+REGN    # Regeneron
+REG     # Regency Centers
+RF      # Regions Financial
+RJF     # Raymond James
+RL      # Ralph Lauren
+RMD     # ResMed
+ROK     # Rockwell Automation
+ROL     # Rollins
+ROP     # Roper Technologies
+ROST    # Ross Stores
+RSG     # Republic Services
+RTX     # RTX Corporation
+RVTY    # Revvity
+SBAC    # SBA Communications
+SBUX    # Starbucks
+SCHW    # Charles Schwab
+SJM     # J.M. Smucker
+SLB     # Schlumberger
+SMCI    # Super Micro Computer
+SNA     # Snap-on
+SNPS    # Synopsys
+SO      # Southern Company
+SOLV    # Solventum
+SPG     # Simon Property Group
+SPGI    # S&P Global
+SRE     # Sempra
+STT     # State Street
+STX     # Seagate Technology
+STZ     # Constellation Brands
+SW      # Smurfit Westrock
+SWK     # Stanley Black & Decker
+SWKS    # Skyworks Solutions
+SYF     # Synchrony Financial
+SYK     # Stryker
+SYY     # Sysco
+T       # AT&T
+TAP     # Molson Coors
+TDG     # TransDigm
+TDY     # Teledyne Technologies
+TECH    # Bio-Techne
+TEL     # TE Connectivity
+TER     # Teradyne
+TFC     # Truist Financial
+TGT     # Target
+TJX     # TJX Companies
+TKO     # TKO Group
+TMUS    # T-Mobile US
+TPL     # Texas Pacific Land
+TPR     # Tapestry
+TRGP    # Targa Resources
+TRMB    # Trimble
+TROW    # T. Rowe Price
+TSCO    # Tractor Supply
+TSLA    # Tesla
+TSN     # Tyson Foods
+TTD     # The Trade Desk
+TT      # Trane Technologies
+TTWO    # Take-Two Interactive
+TXT     # Textron
+TYL     # Tyler Technologies
+UAL     # United Airlines
+UBER    # Uber Technologies
+UDR     # UDR Inc.
+UHS     # Universal Health Services
+ULTA    # Ulta Beauty
+UNP     # Union Pacific
+UPS     # United Parcel Service
+URI     # United Rentals
+USB     # U.S. Bancorp
+VLO     # Valero Energy
+VICI    # VICI Properties
+VLTO    # Veralto
+VMC     # Vulcan Materials
+VRSN    # VeriSign
+VRSK     # Verisk Analytics
+VRTX    # Vertex Pharmaceuticals
+VST     # Vistra
+VTR     # Ventas
+VTRS    # Viatris
+WAB     # Wabtec
+WAT     # Waters Corporation
+WBD     # Warner Bros. Discovery
+WDC     # Western Digital
+WEC     # WEC Energy
+WELL    # Welltower
+WFC     # Wells Fargo
+WM      # Waste Management
+WMB     # Williams Companies
+WRB     # W.R. Berkley
+WSM     # Williams-Sonoma
+WST     # West Pharmaceutical Services
+WTW     # Willis Towers Watson
+WY      # Weyerhaeuser
+WDAY    # Workday
+WYNN    # Wynn Resorts
+XEL     # Xcel Energy
+XOM     # ExxonMobil
+XYL     # Xylem
+YUM     # Yum! Brands
+ZBRA    # Zebra Technologies
+ZBH     # Zimmer Biomet
+ZTS     # Zoetis
+
+# ============================================================
+# NASDAQ-100 (additional components not in DJIA or S&P 500)
+# ============================================================
+ALNY    # Alnylam Pharmaceuticals
+ARM     # Arm Holdings
+ASML    # ASML Holding
+CCEP    # Coca-Cola Europacific Partners
+FER     # Ferrovial
+INSM    # Insmed
+MELI    # MercadoLibre
+MRVL    # Marvell Technology
+MSTR    # MicroStrategy
+PDD     # PDD Holdings (Temu/Pinduoduo)
+SHOP    # Shopify
+TEAM    # Atlassian
+TRI     # Thomson Reuters
+ZS      # Zscaler

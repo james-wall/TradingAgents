@@ -447,18 +447,129 @@ def get_insider_transactions(
     try:
         ticker_obj = yf.Ticker(ticker.upper())
         data = ticker_obj.insider_transactions
-        
+
         if data is None or data.empty:
             return f"No insider transactions data found for symbol '{ticker}'"
-            
+
         # Convert to CSV string for consistency with other functions
         csv_string = data.to_csv()
-        
+
         # Add header information
         header = f"# Insider Transactions data for {ticker.upper()}\n"
         header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-        
+
         return header + csv_string
-        
+
     except Exception as e:
         return f"Error retrieving insider transactions for {ticker}: {str(e)}"
+
+
+def get_iv_data_YFin(
+    symbol: Annotated[str, "ticker symbol of the company"],
+    curr_date: Annotated[str, "current date YYYY-MM-DD (unused, kept for API consistency)"] = None,
+) -> str:
+    """Fetch implied volatility data from yfinance options chains."""
+    from datetime import timedelta
+    import pandas as pd
+
+    try:
+        ticker_obj = yf.Ticker(symbol.upper())
+
+        # Current price
+        try:
+            current_price = ticker_obj.fast_info.last_price
+        except Exception:
+            info = ticker_obj.info
+            current_price = info.get("regularMarketPrice") or info.get("previousClose")
+        if not current_price:
+            return f"Could not retrieve current price for {symbol}"
+
+        # Options expirations
+        expirations = ticker_obj.options
+        if not expirations:
+            return f"No options data available for {symbol.upper()}. This ticker may not have listed options."
+
+        header = (
+            f"# Implied Volatility Data for {symbol.upper()}\n"
+            f"# Current Price: ${current_price:.2f}\n"
+            f"# Data retrieved: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        )
+
+        # ATM IV from nearest expiration
+        nearest_exp = expirations[0]
+        chain = ticker_obj.option_chain(nearest_exp)
+        calls = chain.calls.copy()
+        puts = chain.puts.copy()
+
+        atm_call_iv = atm_put_iv = None
+        if not calls.empty:
+            calls["distance"] = (calls["strike"] - current_price).abs()
+            atm_call_iv = calls.loc[calls["distance"].idxmin(), "impliedVolatility"]
+        if not puts.empty:
+            puts["distance"] = (puts["strike"] - current_price).abs()
+            atm_put_iv = puts.loc[puts["distance"].idxmin(), "impliedVolatility"]
+
+        if atm_call_iv is None and atm_put_iv is None:
+            return header + "No ATM options found in nearest expiration."
+
+        valid_ivs = [v for v in [atm_call_iv, atm_put_iv] if v is not None and not pd.isna(v)]
+        atm_iv = sum(valid_ivs) / len(valid_ivs)
+
+        lines = [
+            "## ATM Implied Volatility (Nearest Expiration)",
+            f"Expiration Date: {nearest_exp}",
+        ]
+        if atm_call_iv is not None and not pd.isna(atm_call_iv):
+            lines.append(f"ATM Call IV: {atm_call_iv:.1%}")
+        if atm_put_iv is not None and not pd.isna(atm_put_iv):
+            lines.append(f"ATM Put IV: {atm_put_iv:.1%}")
+        lines.append(f"ATM IV (average): {atm_iv:.1%}")
+
+        # 20-day historical volatility for comparison
+        end_dt = datetime.now()
+        start_dt = end_dt - timedelta(days=90)
+        hist = ticker_obj.history(
+            start=start_dt.strftime("%Y-%m-%d"),
+            end=end_dt.strftime("%Y-%m-%d"),
+            progress=False,
+        )
+        hv_20 = None
+        if len(hist) >= 21:
+            returns = hist["Close"].pct_change().dropna()
+            hv_20 = float(returns.tail(20).std() * (252 ** 0.5))
+
+        if hv_20 is not None:
+            iv_premium = atm_iv - hv_20
+            if iv_premium > 0.05:
+                iv_assessment = "IV significantly elevated vs realized vol — options are expensive (typical before earnings/events)"
+            elif iv_premium < -0.05:
+                iv_assessment = "IV compressed below realized vol — options are cheap"
+            else:
+                iv_assessment = "IV near realized vol — fairly priced"
+            lines += [
+                "",
+                "## Volatility Comparison",
+                f"20-Day Historical Volatility (realized, annualized): {hv_20:.1%}",
+                f"IV vs HV Premium: {iv_premium:+.1%}",
+                f"Assessment: {iv_assessment}",
+            ]
+
+        # IV term structure across next 4 expirations
+        term_rows = []
+        for exp in expirations[:4]:
+            try:
+                ch = ticker_obj.option_chain(exp)
+                if not ch.calls.empty:
+                    ch.calls["distance"] = (ch.calls["strike"] - current_price).abs()
+                    iv_val = ch.calls.loc[ch.calls["distance"].idxmin(), "impliedVolatility"]
+                    if iv_val is not None and not pd.isna(iv_val):
+                        term_rows.append(f"  {exp}: {float(iv_val):.1%}")
+            except Exception:
+                pass
+        if term_rows:
+            lines += ["", "## IV Term Structure (ATM Call IV by Expiration)"] + term_rows
+
+        return header + "\n".join(lines)
+
+    except Exception as e:
+        return f"Error retrieving IV data for {symbol}: {str(e)}"

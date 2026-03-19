@@ -29,6 +29,7 @@ from cli.models import AnalystType
 from cli.utils import *
 from cli.announcements import fetch_announcements, display_announcements
 from cli.stats_handler import StatsCallbackHandler
+from cli.portfolio_aggregator import aggregate_portfolio_recommendations
 
 console = Console()
 
@@ -1170,6 +1171,412 @@ def run_analysis():
 @app.command()
 def analyze():
     run_analysis()
+
+
+def load_tickers_from_file(file_path: str) -> list[str]:
+    """Read tickers from a text file, one per line. Ignores blank lines and #-comments."""
+    path = Path(file_path)
+    if not path.exists():
+        console.print(f"[red]Error: File not found: {file_path}[/red]")
+        raise typer.Exit(1)
+    tickers = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.split("#")[0].strip()  # strip inline comments
+        if line:
+            tickers.append(line.upper())
+    if not tickers:
+        console.print(f"[red]Error: No tickers found in {file_path}[/red]")
+        raise typer.Exit(1)
+    return tickers
+
+
+def get_portfolio_selections(tickers: list[str]) -> dict:
+    """Collect analysis configuration (no ticker prompt — tickers come from file)."""
+    console.print(
+        Panel(
+            f"[bold cyan]Tickers loaded:[/bold cyan] {', '.join(tickers)}\n"
+            f"[dim]{len(tickers)} stock(s) will be analyzed sequentially.[/dim]",
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
+    console.print()
+
+    def create_question_box(title, prompt, default=None):
+        box_content = f"[bold]{title}[/bold]\n[dim]{prompt}[/dim]"
+        if default:
+            box_content += f"\n[dim]Default: {default}[/dim]"
+        return Panel(box_content, border_style="blue", padding=(1, 2))
+
+    # Analysis date
+    default_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    console.print(
+        create_question_box("Analysis Date", "Enter the analysis date (YYYY-MM-DD)", default_date)
+    )
+    analysis_date = get_analysis_date()
+
+    # Analysts
+    console.print(create_question_box("Analysts Team", "Select your LLM analyst agents"))
+    selected_analysts = select_analysts()
+    console.print(
+        f"[green]Selected analysts:[/green] {', '.join(a.value for a in selected_analysts)}"
+    )
+
+    # Research depth
+    console.print(create_question_box("Research Depth", "Select your research depth level"))
+    selected_research_depth = select_research_depth()
+
+    # LLM provider
+    console.print(create_question_box("LLM Backend", "Select which service to talk to"))
+    selected_llm_provider, backend_url = select_llm_provider()
+
+    # Models
+    console.print(create_question_box("Thinking Agents", "Select your thinking agents"))
+    selected_shallow_thinker = select_shallow_thinking_agent(selected_llm_provider)
+    selected_deep_thinker = select_deep_thinking_agent(selected_llm_provider)
+
+    # Provider-specific config
+    thinking_level = None
+    reasoning_effort = None
+    provider_lower = selected_llm_provider.lower()
+    if provider_lower == "google":
+        console.print(create_question_box("Thinking Mode", "Configure Gemini thinking mode"))
+        thinking_level = ask_gemini_thinking_config()
+    elif provider_lower == "openai":
+        console.print(create_question_box("Reasoning Effort", "Configure OpenAI reasoning effort"))
+        reasoning_effort = ask_openai_reasoning_effort()
+
+    return {
+        "analysis_date": analysis_date,
+        "analysts": selected_analysts,
+        "research_depth": selected_research_depth,
+        "llm_provider": selected_llm_provider.lower(),
+        "backend_url": backend_url,
+        "shallow_thinker": selected_shallow_thinker,
+        "deep_thinker": selected_deep_thinker,
+        "google_thinking_level": thinking_level,
+        "openai_reasoning_effort": reasoning_effort,
+    }
+
+
+@app.command(name="analyze-portfolio")
+def analyze_portfolio(
+    file: Optional[str] = typer.Option(
+        None, "--file", "-f", help="Path to .txt file with tickers (one per line)"
+    )
+):
+    """Analyze a portfolio of stocks from a tickers file and generate weighted daily recommendations."""
+    # Resolve tickers file
+    if file is None:
+        file = typer.prompt("Path to tickers file (.txt, one ticker per line)")
+    tickers = load_tickers_from_file(file)
+
+    # Display welcome header
+    console.print(
+        Panel(
+            "[bold green]TradingAgents — Portfolio Analysis Mode[/bold green]\n"
+            "[dim]Analyzes multiple tickers and synthesizes a weighted daily action plan.[/dim]",
+            border_style="green",
+            padding=(1, 2),
+        )
+    )
+    console.print()
+
+    # Gather configuration
+    selections = get_portfolio_selections(tickers)
+
+    # Build graph config
+    config = DEFAULT_CONFIG.copy()
+    config["max_debate_rounds"] = selections["research_depth"]
+    config["max_risk_discuss_rounds"] = selections["research_depth"]
+    config["quick_think_llm"] = selections["shallow_thinker"]
+    config["deep_think_llm"] = selections["deep_thinker"]
+    config["backend_url"] = selections["backend_url"]
+    config["llm_provider"] = selections["llm_provider"]
+    config["google_thinking_level"] = selections.get("google_thinking_level")
+    config["openai_reasoning_effort"] = selections.get("openai_reasoning_effort")
+
+    selected_set = {a.value for a in selections["analysts"]}
+    selected_analyst_keys = [a for a in ANALYST_ORDER if a in selected_set]
+
+    # Initialise graph once and reuse across all tickers
+    console.print("[dim]Initialising analysis graph...[/dim]")
+    graph = TradingAgentsGraph(
+        selected_analyst_keys,
+        config=config,
+        debug=False,
+    )
+
+    ticker_results = []
+    n = len(tickers)
+
+    for idx, ticker in enumerate(tickers, 1):
+        console.print()
+        console.print(
+            Panel(
+                f"[bold cyan]Analyzing {ticker}[/bold cyan]  ({idx}/{n})\n"
+                f"[dim]Date: {selections['analysis_date']}[/dim]",
+                border_style="cyan",
+                padding=(0, 2),
+            )
+        )
+
+        with console.status(
+            f"[bold green]Running agents for {ticker}...[/bold green]", spinner="dots"
+        ):
+            try:
+                final_state, signal = graph.propagate(ticker, selections["analysis_date"])
+            except Exception as e:
+                console.print(f"[red]  Error analyzing {ticker}: {e}[/red]")
+                ticker_results.append(
+                    {
+                        "ticker": ticker,
+                        "signal": "ERROR",
+                        "final_trade_decision": f"Analysis failed: {e}",
+                    }
+                )
+                continue
+
+        console.print(
+            f"  [bold]Result:[/bold] "
+            + (
+                f"[green]{signal}[/green]"
+                if signal == "BUY"
+                else f"[red]{signal}[/red]"
+                if signal == "SELL"
+                else f"[yellow]{signal}[/yellow]"
+            )
+        )
+
+        ticker_results.append(
+            {
+                "ticker": ticker,
+                "signal": signal,
+                "final_trade_decision": final_state.get("final_trade_decision", ""),
+            }
+        )
+
+        # Optionally save individual report
+        results_dir = (
+            Path(config["results_dir"])
+            / "portfolio"
+            / selections["analysis_date"]
+            / ticker
+        )
+        try:
+            save_report_to_disk(final_state, ticker, results_dir)
+        except Exception:
+            pass  # Don't block portfolio analysis if individual save fails
+
+    # Show per-ticker summary table
+    console.print()
+    console.print(Rule("Individual Results", style="bold cyan"))
+    summary_table = Table(
+        show_header=True,
+        header_style="bold magenta",
+        box=box.SIMPLE_HEAD,
+        padding=(0, 2),
+    )
+    summary_table.add_column("Ticker", style="cyan", justify="center")
+    summary_table.add_column("Signal", justify="center")
+    for r in ticker_results:
+        sig = r["signal"]
+        if sig == "BUY":
+            sig_str = "[green]BUY[/green]"
+        elif sig == "SELL":
+            sig_str = "[red]SELL[/red]"
+        elif sig == "HOLD":
+            sig_str = "[yellow]HOLD[/yellow]"
+        else:
+            sig_str = f"[dim]{sig}[/dim]"
+        summary_table.add_row(r["ticker"], sig_str)
+    console.print(summary_table)
+
+    # Filter out errored tickers before aggregation
+    valid_results = [r for r in ticker_results if r["signal"] != "ERROR"]
+    if not valid_results:
+        console.print("[red]No successful analyses to aggregate.[/red]")
+        raise typer.Exit(1)
+
+    # Portfolio aggregation step
+    console.print()
+    console.print(Rule("Portfolio Aggregation", style="bold green"))
+    with console.status("[bold green]Synthesizing portfolio action plan...[/bold green]", spinner="dots"):
+        portfolio_plan = aggregate_portfolio_recommendations(
+            graph.quick_thinking_llm,
+            valid_results,
+            selections["analysis_date"],
+        )
+
+    # Display the portfolio plan
+    console.print()
+    console.print(Panel(Markdown(portfolio_plan), title="Portfolio Action Plan", border_style="green", padding=(1, 2)))
+
+    # Save portfolio plan
+    save_choice = typer.prompt("\nSave portfolio report?", default="Y").strip().upper()
+    if save_choice in ("Y", "YES", ""):
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_path = Path.cwd() / "reports" / f"portfolio_{selections['analysis_date']}_{timestamp}"
+        save_path_str = typer.prompt(
+            "Save path (press Enter for default)", default=str(default_path)
+        ).strip()
+        save_path = Path(save_path_str)
+        try:
+            save_path.mkdir(parents=True, exist_ok=True)
+            # Save portfolio plan
+            (save_path / "portfolio_plan.md").write_text(
+                f"# Portfolio Action Plan\n\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                + portfolio_plan,
+                encoding="utf-8",
+            )
+            # Save individual reports
+            for r in ticker_results:
+                if r["signal"] != "ERROR":
+                    ticker_dir = save_path / r["ticker"]
+                    ticker_dir.mkdir(exist_ok=True)
+                    (ticker_dir / "final_decision.md").write_text(
+                        f"# {r['ticker']} — {r['signal']}\n\n{r['final_trade_decision']}",
+                        encoding="utf-8",
+                    )
+            console.print(f"\n[green]✓ Portfolio report saved to:[/green] {save_path.resolve()}")
+            console.print(f"  [dim]Main report:[/dim] portfolio_plan.md")
+        except Exception as e:
+            console.print(f"[red]Error saving report: {e}[/red]")
+
+
+@app.command(name="build-watchlist")
+def build_watchlist(
+    source: str = typer.Option("tickers.txt", "--source", "-s", help="Source tickers file (one ticker per line)"),
+    output: str = typer.Option("watchlist.txt", "--output", "-o", help="Output watchlist file"),
+    days: int = typer.Option(5, "--days", "-d", help="Number of business days ahead to look for earnings"),
+):
+    """
+    Build a focused watchlist of tickers with earnings in the next N business days.
+    Reads from a source tickers file, checks each via yfinance, and writes matches to output.
+    """
+    import yfinance as yf
+    import pandas as pd
+    import numpy as np
+
+    tickers = load_tickers_from_file(source)
+
+    console.print(
+        Panel(
+            f"[bold cyan]Earnings Watchlist Builder[/bold cyan]\n"
+            f"[dim]Scanning {len(tickers)} tickers for earnings within the next {days} business days.[/dim]\n"
+            f"[dim]Source: {source}  →  Output: {output}[/dim]",
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
+    console.print()
+
+    today = pd.Timestamp.today().normalize()
+    # End of window: N business days from today
+    bdays = pd.bdate_range(start=today, periods=days + 1)
+    window_end = bdays[-1]
+
+    earnings_tickers = []
+    errors = []
+    skipped = 0
+
+    with console.status("[bold green]Checking earnings dates...[/bold green]", spinner="dots") as status:
+        for i, ticker in enumerate(tickers, 1):
+            status.update(f"[bold green]Checking {ticker} ({i}/{len(tickers)})...[/bold green]")
+            try:
+                t = yf.Ticker(ticker)
+                earnings_date = _get_next_earnings_date(t)
+                if earnings_date is None:
+                    skipped += 1
+                    continue
+                # Normalize to date only for comparison
+                ed = pd.Timestamp(earnings_date).normalize()
+                if today <= ed <= window_end:
+                    earnings_tickers.append((ticker, ed.strftime("%Y-%m-%d")))
+            except Exception as e:
+                errors.append((ticker, str(e)))
+
+    console.print()
+
+    # Results table
+    if earnings_tickers:
+        result_table = Table(
+            show_header=True,
+            header_style="bold magenta",
+            box=box.SIMPLE_HEAD,
+            padding=(0, 2),
+        )
+        result_table.add_column("Ticker", style="cyan", justify="center")
+        result_table.add_column("Earnings Date", style="green", justify="center")
+        for ticker, date in sorted(earnings_tickers, key=lambda x: x[1]):
+            result_table.add_row(ticker, date)
+        console.print(Panel(result_table, title=f"Tickers with Earnings in Next {days} Business Days", border_style="green"))
+    else:
+        console.print(f"[yellow]No tickers found with earnings in the next {days} business days.[/yellow]")
+
+    console.print(f"\n[dim]Scanned: {len(tickers)} | Found: {len(earnings_tickers)} | No data: {skipped} | Errors: {len(errors)}[/dim]")
+
+    # Write output file
+    if earnings_tickers:
+        output_path = Path(output)
+        lines = [
+            f"# Earnings Watchlist",
+            f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"# Source: {source}",
+            f"# Window: next {days} business days from {today.strftime('%Y-%m-%d')}",
+            f"# Tickers: {len(earnings_tickers)}",
+            "",
+        ]
+        for ticker, date in sorted(earnings_tickers, key=lambda x: x[1]):
+            lines.append(f"{ticker}    # Earnings: {date}")
+        output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        console.print(f"\n[green]✓ Watchlist saved to:[/green] {output_path.resolve()}")
+        console.print(f"[dim]Run:[/dim] tradingagents analyze-portfolio --file {output}")
+    else:
+        console.print("[dim]No output file written (no matches found).[/dim]")
+
+
+def _get_next_earnings_date(ticker_obj):
+    """
+    Try multiple yfinance APIs to find the next upcoming earnings date.
+    Returns a pandas Timestamp or None if not found.
+    """
+    import pandas as pd
+
+    today = pd.Timestamp.today().normalize()
+
+    # Method 1: ticker.calendar (dict with 'Earnings Date' key)
+    try:
+        cal = ticker_obj.calendar
+        if isinstance(cal, dict):
+            dates = cal.get("Earnings Date")
+            if dates:
+                if not isinstance(dates, (list, tuple)):
+                    dates = [dates]
+                future = [pd.Timestamp(d) for d in dates if pd.Timestamp(d).normalize() >= today]
+                if future:
+                    return min(future)
+        elif isinstance(cal, pd.DataFrame) and not cal.empty:
+            if "Earnings Date" in cal.index:
+                val = cal.loc["Earnings Date"].iloc[0] if hasattr(cal.loc["Earnings Date"], "iloc") else cal.loc["Earnings Date"]
+                ts = pd.Timestamp(val)
+                if ts.normalize() >= today:
+                    return ts
+    except Exception:
+        pass
+
+    # Method 2: ticker.earnings_dates DataFrame (future dates have NaN EPS)
+    try:
+        ed = ticker_obj.earnings_dates
+        if ed is not None and not ed.empty:
+            ed.index = pd.to_datetime(ed.index)
+            future = ed[ed.index.normalize() >= today]
+            if not future.empty:
+                return future.index.min()
+    except Exception:
+        pass
+
+    return None
 
 
 if __name__ == "__main__":
