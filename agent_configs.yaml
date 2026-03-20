@@ -1,0 +1,62 @@
+# Paper Trading Agent Configurations
+# Each agent gets $100k starting balance and uses a different
+# combination of models, analysts, and thinking settings.
+# Designed to isolate: thinking mode vs no-thinking, and
+# analyst breadth vs earnings-focused specialist.
+
+agents:
+  # Agent A: Full pipeline, thinking ON, deep models
+  # Hypothesis: comprehensive analysis wins for earnings plays
+  - name: "full-thinking-deep"
+    llm_provider: google
+    deep_think_llm: gemini-3.1-pro-preview
+    quick_think_llm: gemini-3-flash-preview
+    google_thinking_level: high
+    analysts:
+      - market
+      - social
+      - news
+      - fundamentals
+    research_depth: 1
+    starting_balance: 100000
+
+  # Agent B: Fundamentals + News only, thinking ON
+  # Hypothesis: for earnings plays, hard data beats market noise
+  - name: "earnings-specialist-thinking"
+    llm_provider: google
+    deep_think_llm: gemini-3.1-pro-preview
+    quick_think_llm: gemini-3-flash-preview
+    google_thinking_level: high
+    analysts:
+      - fundamentals
+      - news
+    research_depth: 1
+    starting_balance: 100000
+
+  # Agent C: Full pipeline, thinking OFF, stable models
+  # Hypothesis: speed + breadth beats reasoning depth
+  - name: "full-no-thinking-fast"
+    llm_provider: google
+    deep_think_llm: gemini-2.5-pro
+    quick_think_llm: gemini-2.5-flash
+    google_thinking_level: null
+    analysts:
+      - market
+      - social
+      - news
+      - fundamentals
+    research_depth: 1
+    starting_balance: 100000
+
+  # Agent D: Market + Social only, thinking OFF
+  # Hypothesis: technical momentum + sentiment captures pre-earnings drift
+  - name: "momentum-sentiment-fast"
+    llm_provider: google
+    deep_think_llm: gemini-2.5-pro
+    quick_think_llm: gemini-2.5-flash
+    google_thinking_level: null
+    analysts:
+      - market
+      - social
+    research_depth: 1
+    starting_balance: 100000

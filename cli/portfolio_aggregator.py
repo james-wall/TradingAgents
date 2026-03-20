@@ -82,3 +82,54 @@ def aggregate_portfolio_recommendations(
 
     response = llm.invoke(messages)
     return response.content
+
+
+# ---------------------------------------------------------------------------
+# Structured plan parser (used by paper trading execution)
+# ---------------------------------------------------------------------------
+
+_PARSE_SYSTEM = """You are a JSON extractor. Given a portfolio action plan in markdown, extract each ticker's trade instruction.
+
+Return ONLY a valid JSON array — no prose, no code fences. Each element must have exactly these fields:
+- "ticker": string (stock symbol, uppercase)
+- "action": "BUY", "SELL", or "HOLD"
+- "conviction": integer 1–10
+- "buy_weight": for BUY actions the allocation fraction as a decimal (e.g. 35% → 0.35); null for SELL and HOLD
+
+Example output:
+[
+  {"ticker": "NVDA", "action": "BUY", "conviction": 8, "buy_weight": 0.35},
+  {"ticker": "AAPL", "action": "SELL", "conviction": 7, "buy_weight": null},
+  {"ticker": "MSFT", "action": "HOLD", "conviction": 5, "buy_weight": null}
+]"""
+
+
+def parse_portfolio_plan(llm, portfolio_plan_text: str) -> list[dict]:
+    """
+    Use an LLM to extract structured trade actions from a portfolio plan.
+    Returns list of dicts: {ticker, action, conviction, buy_weight}
+    """
+    import json
+    import re
+
+    response = llm.invoke([
+        SystemMessage(content=_PARSE_SYSTEM),
+        HumanMessage(content=portfolio_plan_text),
+    ])
+    content = response.content.strip()
+
+    # Strip markdown code fences if model added them
+    content = re.sub(r"^```(?:json)?\s*", "", content, flags=re.MULTILINE)
+    content = re.sub(r"\s*```\s*$", "", content, flags=re.MULTILINE)
+    content = content.strip()
+
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        match = re.search(r"\[.*?\]", content, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+    return []

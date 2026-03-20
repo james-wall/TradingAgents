@@ -1579,5 +1579,360 @@ def _get_next_earnings_date(ticker_obj):
     return None
 
 
+# ---------------------------------------------------------------------------
+# Shared helper: run portfolio analysis programmatically (no interactive UI)
+# ---------------------------------------------------------------------------
+
+def run_portfolio_analysis_for_agent(tickers, graph_config, analyst_keys, analysis_date):
+    """
+    Core portfolio analysis loop — usable by both interactive CLI and paper trading.
+    Returns (ticker_results, portfolio_plan_text, quick_thinking_llm).
+    """
+    from tradingagents.graph.trading_graph import TradingAgentsGraph
+
+    graph = TradingAgentsGraph(analyst_keys, config=graph_config, debug=False)
+    ticker_results = []
+
+    for ticker in tickers:
+        try:
+            final_state, signal = graph.propagate(ticker, analysis_date)
+            ticker_results.append({
+                "ticker": ticker,
+                "signal": signal,
+                "final_trade_decision": final_state.get("final_trade_decision", ""),
+            })
+        except Exception as e:
+            ticker_results.append({
+                "ticker": ticker,
+                "signal": "ERROR",
+                "final_trade_decision": str(e),
+            })
+
+    valid = [r for r in ticker_results if r["signal"] != "ERROR"]
+    portfolio_plan = None
+    if valid:
+        portfolio_plan = aggregate_portfolio_recommendations(
+            graph.quick_thinking_llm, valid, analysis_date
+        )
+
+    return ticker_results, portfolio_plan, graph.quick_thinking_llm
+
+
+# ---------------------------------------------------------------------------
+# init-paper-trading
+# ---------------------------------------------------------------------------
+
+@app.command(name="init-paper-trading")
+def init_paper_trading(
+    config_file: str = typer.Option("agent_configs.yaml", "--config", "-c", help="Path to agent_configs.yaml"),
+):
+    """
+    Initialise the paper trading database from agent_configs.yaml.
+    Creates paper_trading.db and registers all configured agents.
+    Safe to re-run — existing agents are updated, balances are preserved.
+    """
+    from paper_trading.database import init_db, register_agent, get_all_agents
+    from paper_trading.config import load_agent_configs
+
+    try:
+        agents = load_agent_configs(config_file)
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+    init_db()
+
+    for agent_cfg in agents:
+        name = agent_cfg["name"]
+        starting_balance = agent_cfg.get("starting_balance", 100000)
+        register_agent(name, agent_cfg, starting_balance)
+        console.print(f"  [green]✓[/green] Registered agent: [cyan]{name}[/cyan]  (${starting_balance:,.0f})")
+
+    all_agents = get_all_agents()
+    console.print(f"\n[bold green]Paper trading initialised.[/bold green] {len(all_agents)} agent(s) ready.")
+    console.print("[dim]Run:[/dim] tradingagents paper-trade --file watchlist.txt --date YYYY-MM-DD")
+
+
+# ---------------------------------------------------------------------------
+# paper-trade
+# ---------------------------------------------------------------------------
+
+@app.command(name="paper-trade")
+def paper_trade(
+    file: str = typer.Option(..., "--file", "-f", help="Watchlist .txt file to analyse"),
+    date: Optional[str] = typer.Option(None, "--date", "-d", help="Trade date YYYY-MM-DD (default: today)"),
+    config_file: str = typer.Option("agent_configs.yaml", "--config", "-c", help="Agent configs YAML"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Analyse and parse but do not write trades to DB"),
+):
+    """
+    Run all paper trading agents against a watchlist for a given date.
+    Executes trades at market-open prices and records daily snapshots.
+    """
+    from paper_trading.database import init_db, get_agent, get_cash, get_positions, get_current_prices
+    from paper_trading.account import Account
+    from paper_trading.execution import get_open_prices, get_current_prices as gcp, parse_portfolio_plan, execute_paper_trades
+    from paper_trading.config import load_agent_configs, agent_to_graph_config, get_analyst_keys
+    from cli.portfolio_aggregator import parse_portfolio_plan as ppp
+
+    trade_date = date or datetime.datetime.now().strftime("%Y-%m-%d")
+
+    tickers = load_tickers_from_file(file)
+
+    try:
+        agent_cfgs = load_agent_configs(config_file)
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+    init_db()
+
+    console.print(
+        Panel(
+            f"[bold cyan]Paper Trade — {trade_date}[/bold cyan]\n"
+            f"[dim]Tickers: {', '.join(tickers)}\n"
+            f"Agents: {len(agent_cfgs)}  |  Dry run: {dry_run}[/dim]",
+            border_style="cyan", padding=(1, 2),
+        )
+    )
+
+    # Fetch open prices once (shared across agents)
+    console.print("\n[dim]Fetching market open prices...[/dim]")
+    prices = get_open_prices(tickers, trade_date)
+    if not prices:
+        console.print("[yellow]Warning: Could not fetch open prices. Trades will be skipped.[/yellow]")
+
+    # Also get prices for any existing positions not in today's watchlist
+    all_agent_tickers = set(tickers)
+    for agent_cfg in agent_cfgs:
+        name = agent_cfg["name"]
+        if get_agent(name):
+            for t in get_positions(name):
+                all_agent_tickers.add(t)
+    extra_prices = gcp(list(all_agent_tickers - set(tickers)))
+    all_prices = {**extra_prices, **prices}  # open prices take precedence
+
+    for agent_cfg in agent_cfgs:
+        name = agent_cfg["name"]
+        console.print(f"\n{'─'*60}")
+        console.print(f"[bold cyan]Agent: {name}[/bold cyan]")
+
+        if not get_agent(name):
+            console.print(f"  [yellow]Not initialised — run init-paper-trading first. Skipping.[/yellow]")
+            continue
+
+        graph_config = agent_to_graph_config(agent_cfg)
+        analyst_keys = get_analyst_keys(agent_cfg)
+
+        # Run analysis
+        with console.status(f"[green]Running analysis for {name}...[/green]", spinner="dots"):
+            ticker_results, portfolio_plan, llm = run_portfolio_analysis_for_agent(
+                tickers, graph_config, analyst_keys, trade_date
+            )
+
+        if not portfolio_plan:
+            console.print("  [yellow]No portfolio plan generated — skipping trades.[/yellow]")
+            continue
+
+        # Parse plan into structured actions
+        with console.status("[green]Parsing trade actions...[/green]", spinner="dots"):
+            actions = ppp(llm, portfolio_plan)
+
+        if not actions:
+            console.print("  [yellow]Could not parse trade actions from plan.[/yellow]")
+            continue
+
+        console.print(f"  Parsed [bold]{len(actions)}[/bold] trade action(s).")
+
+        if not dry_run:
+            account = Account(name)
+            trade_results = execute_paper_trades(account, actions, trade_date, prices)
+
+            # Mark-to-market snapshot (use all_prices for existing positions)
+            account.take_snapshot(trade_date, all_prices)
+
+            # Display trade results
+            trade_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
+            trade_table.add_column("Ticker", style="cyan", justify="center")
+            trade_table.add_column("Action", justify="center")
+            trade_table.add_column("Shares", justify="right")
+            trade_table.add_column("Price", justify="right")
+            trade_table.add_column("Total", justify="right")
+            trade_table.add_column("Status", justify="center")
+
+            for r in trade_results:
+                action_str = r["action"]
+                color = "green" if action_str == "BUY" else "red" if action_str == "SELL" else "yellow"
+                shares_str = str(r.get("shares", "—"))
+                price_str = f"${r['price']:.2f}" if "price" in r else "—"
+                total_str = f"${r['total']:,.2f}" if "total" in r else "—"
+                status_color = "green" if r["status"] == "OK" else "red" if r["status"] == "FAILED" else "dim"
+                trade_table.add_row(
+                    r["ticker"],
+                    f"[{color}]{action_str}[/{color}]",
+                    shares_str, price_str, total_str,
+                    f"[{status_color}]{r['status']}[/{status_color}]",
+                )
+            console.print(trade_table)
+
+            snap = account.take_snapshot.__func__ if False else None
+            from paper_trading.database import get_latest_snapshot
+            snap = get_latest_snapshot(name)
+            if snap:
+                daily = f"{snap['daily_return_pct']:+.2f}%" if snap.get("daily_return_pct") is not None else "—"
+                console.print(
+                    f"  Portfolio: [bold]${snap['portfolio_value']:,.2f}[/bold]  "
+                    f"Cash: ${snap['cash']:,.2f}  "
+                    f"Day: {daily}  "
+                    f"Total: [bold]{snap['cumulative_return_pct']:+.2f}%[/bold]"
+                )
+        else:
+            console.print("  [dim](dry run — no trades written)[/dim]")
+            for a in actions:
+                console.print(f"    {a['ticker']:6s}  {a['action']:4s}  conviction={a.get('conviction','?')}")
+
+    console.print(f"\n[bold green]Paper trade run complete for {trade_date}.[/bold green]")
+    console.print("[dim]Run:[/dim] tradingagents leaderboard")
+
+
+# ---------------------------------------------------------------------------
+# leaderboard
+# ---------------------------------------------------------------------------
+
+@app.command(name="leaderboard")
+def leaderboard():
+    """Show all paper trading agents ranked by cumulative return."""
+    from paper_trading.database import init_db, get_leaderboard
+
+    init_db()
+    rows = get_leaderboard()
+
+    if not rows:
+        console.print("[yellow]No agents found. Run init-paper-trading first.[/yellow]")
+        raise typer.Exit(0)
+
+    console.print()
+    console.print(Rule("Paper Trading Leaderboard", style="bold green"))
+
+    lb_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
+    lb_table.add_column("#", justify="center", width=4)
+    lb_table.add_column("Agent", style="cyan")
+    lb_table.add_column("Portfolio Value", justify="right")
+    lb_table.add_column("Cash", justify="right")
+    lb_table.add_column("Positions", justify="right")
+    lb_table.add_column("Day Return", justify="right")
+    lb_table.add_column("Total Return", justify="right")
+    lb_table.add_column("Last Updated", justify="center")
+
+    for i, row in enumerate(rows, 1):
+        cumulative = row.get("cumulative_return_pct") or 0.0
+        daily = row.get("daily_return_pct")
+        cum_color = "green" if cumulative >= 0 else "red"
+        day_color = "green" if (daily or 0) >= 0 else "red"
+        lb_table.add_row(
+            str(i),
+            row["name"],
+            f"${row['portfolio_value']:,.2f}",
+            f"${row['cash']:,.2f}",
+            f"${row['positions_value']:,.2f}",
+            f"[{day_color}]{daily:+.2f}%[/{day_color}]" if daily is not None else "—",
+            f"[{cum_color}]{cumulative:+.2f}%[/{cum_color}]",
+            row.get("last_updated") or "never",
+        )
+
+    console.print(lb_table)
+
+
+# ---------------------------------------------------------------------------
+# agent-history
+# ---------------------------------------------------------------------------
+
+@app.command(name="agent-history")
+def agent_history(
+    name: str = typer.Argument(..., help="Agent name to inspect"),
+):
+    """Show full trade history and daily P&L for a paper trading agent."""
+    from paper_trading.database import init_db, get_agent, get_all_trades, get_all_snapshots, get_positions, get_cash
+
+    init_db()
+    agent = get_agent(name)
+    if not agent:
+        console.print(f"[red]Agent '{name}' not found.[/red]")
+        raise typer.Exit(1)
+
+    import json as _json
+    cfg = _json.loads(agent["config"])
+
+    console.print()
+    console.print(Rule(f"Agent: {name}", style="bold cyan"))
+    console.print(f"  Provider: [cyan]{cfg.get('llm_provider')}[/cyan]  "
+                  f"Deep: {cfg.get('deep_think_llm')}  "
+                  f"Quick: {cfg.get('quick_think_llm')}")
+    console.print(f"  Analysts: {', '.join(cfg.get('analysts', []))}  "
+                  f"Thinking: {cfg.get('google_thinking_level') or 'off'}")
+    console.print(f"  Starting balance: ${agent['starting_balance']:,.2f}")
+
+    # Current state
+    cash = get_cash(name)
+    positions = get_positions(name)
+    console.print(f"  Cash on hand: ${cash:,.2f}")
+    if positions:
+        console.print(f"  Open positions: {', '.join(f'{t} x{p[\"shares\"]:.0f}' for t, p in positions.items())}")
+    console.print()
+
+    # Daily snapshots
+    snapshots = get_all_snapshots(name)
+    if snapshots:
+        console.print(Rule("Daily P&L", style="dim"))
+        snap_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
+        snap_table.add_column("Date", justify="center")
+        snap_table.add_column("Portfolio Value", justify="right")
+        snap_table.add_column("Cash", justify="right")
+        snap_table.add_column("Positions", justify="right")
+        snap_table.add_column("Day Return", justify="right")
+        snap_table.add_column("Cumulative", justify="right")
+        for s in snapshots:
+            daily = s.get("daily_return_pct")
+            cum = s.get("cumulative_return_pct", 0)
+            day_color = "green" if (daily or 0) >= 0 else "red"
+            cum_color = "green" if cum >= 0 else "red"
+            snap_table.add_row(
+                s["date"],
+                f"${s['portfolio_value']:,.2f}",
+                f"${s['cash']:,.2f}",
+                f"${s['positions_value']:,.2f}",
+                f"[{day_color}]{daily:+.2f}%[/{day_color}]" if daily is not None else "—",
+                f"[{cum_color}]{cum:+.2f}%[/{cum_color}]",
+            )
+        console.print(snap_table)
+        console.print()
+
+    # Trade log
+    trades = get_all_trades(name)
+    if trades:
+        console.print(Rule("Trade History", style="dim"))
+        trade_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
+        trade_table.add_column("Date", justify="center")
+        trade_table.add_column("Ticker", justify="center", style="cyan")
+        trade_table.add_column("Action", justify="center")
+        trade_table.add_column("Shares", justify="right")
+        trade_table.add_column("Price", justify="right")
+        trade_table.add_column("Total", justify="right")
+        trade_table.add_column("Conviction", justify="right")
+        for t in trades:
+            color = "green" if t["action"] == "BUY" else "red" if t["action"] == "SELL" else "yellow"
+            conv = t.get("conviction_weight")
+            trade_table.add_row(
+                t["date"], t["ticker"],
+                f"[{color}]{t['action']}[/{color}]",
+                f"{t['shares']:.0f}",
+                f"${t['price']:.2f}",
+                f"${t['total_value']:,.2f}",
+                f"{conv:.0%}" if conv is not None else "—",
+            )
+        console.print(trade_table)
+    else:
+        console.print("[dim]No trades recorded yet.[/dim]")
+
+
 if __name__ == "__main__":
     app()
