@@ -19,6 +19,9 @@ on:
         required: false
         default: '20'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Prevent two runs from writing to the DB simultaneously
 concurrency:
   group: paper-trade
