@@ -1668,7 +1668,7 @@ def paper_trade(
     Run all paper trading agents against a watchlist for a given date.
     Executes trades at market-open prices and records daily snapshots.
     """
-    from paper_trading.database import init_db, get_agent, get_cash, get_positions, get_current_prices
+    from paper_trading.database import init_db, get_agent, get_cash, get_positions
     from paper_trading.account import Account
     from paper_trading.execution import get_open_prices, get_current_prices as gcp, parse_portfolio_plan, execute_paper_trades
     from paper_trading.config import load_agent_configs, agent_to_graph_config, get_analyst_keys

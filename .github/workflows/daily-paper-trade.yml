@@ -1,0 +1,219 @@
+name: Daily Paper Trade
+
+on:
+  schedule:
+    # 9:30 AM ET (13:30 UTC) Mon–Fri — market open
+    - cron: '30 13 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Trade date YYYY-MM-DD (default: today)'
+        required: false
+        default: ''
+      days_ahead:
+        description: 'Earnings window in business days'
+        required: false
+        default: '3'
+      max_days:
+        description: 'Stop automatically after this many paper trading days'
+        required: false
+        default: '20'
+
+# Prevent two runs from writing to the DB simultaneously
+concurrency:
+  group: paper-trade
+  cancel-in-progress: false
+
+jobs:
+  paper-trade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240  # 4 hrs — enough for 4 agents × ~10 tickers
+
+    steps:
+      # ── 1. Checkout (with write token so we can push DB back) ──────────────
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Pull latest — DB may have been updated by a previous run
+          fetch-depth: 1
+
+      # ── 2. Python (3.11 avoids the Pydantic v1/3.14 incompatibility) ───────
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      # ── 3. Write .env from secrets ─────────────────────────────────────────
+      - name: Configure API keys
+        run: |
+          echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+
+      # ── 4. Resolve trade date ──────────────────────────────────────────────
+      - name: Set trade date
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            echo "trade_date=${{ github.event.inputs.date }}" >> $GITHUB_OUTPUT
+          else
+            echo "trade_date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 5. Check it's a US market trading day ─────────────────────────────
+      - name: Check market day
+        id: market
+        run: |
+          python - <<'EOF'
+          import sys, datetime
+
+          date_str = "${{ steps.date.outputs.trade_date }}"
+          d = datetime.date.fromisoformat(date_str)
+
+          # Skip weekends
+          if d.weekday() >= 5:
+              print("is_trading_day=false")
+              sys.exit(0)
+
+          # Known US market holidays (NYSE) through 2026
+          holidays = {
+              # 2025
+              datetime.date(2025, 1, 1),   # New Year's Day
+              datetime.date(2025, 1, 20),  # MLK Day
+              datetime.date(2025, 2, 17),  # Presidents Day
+              datetime.date(2025, 4, 18),  # Good Friday
+              datetime.date(2025, 5, 26),  # Memorial Day
+              datetime.date(2025, 6, 19),  # Juneteenth
+              datetime.date(2025, 7, 4),   # Independence Day
+              datetime.date(2025, 9, 1),   # Labor Day
+              datetime.date(2025, 11, 27), # Thanksgiving
+              datetime.date(2025, 12, 25), # Christmas
+              # 2026
+              datetime.date(2026, 1, 1),   # New Year's Day
+              datetime.date(2026, 1, 19),  # MLK Day
+              datetime.date(2026, 2, 16),  # Presidents Day
+              datetime.date(2026, 4, 3),   # Good Friday
+              datetime.date(2026, 5, 25),  # Memorial Day
+              datetime.date(2026, 6, 19),  # Juneteenth
+              datetime.date(2026, 7, 3),   # Independence Day (observed)
+              datetime.date(2026, 9, 7),   # Labor Day
+              datetime.date(2026, 11, 26), # Thanksgiving
+              datetime.date(2026, 12, 25), # Christmas
+          }
+
+          is_trading = d not in holidays
+          print(f"is_trading_day={'true' if is_trading else 'false'}")
+          EOF
+          python - <<'EOF' >> $GITHUB_OUTPUT
+          import sys, datetime
+
+          date_str = "${{ steps.date.outputs.trade_date }}"
+          d = datetime.date.fromisoformat(date_str)
+
+          if d.weekday() >= 5:
+              print("is_trading_day=false")
+              sys.exit(0)
+
+          holidays = {
+              datetime.date(2025, 1, 1), datetime.date(2025, 1, 20),
+              datetime.date(2025, 2, 17), datetime.date(2025, 4, 18),
+              datetime.date(2025, 5, 26), datetime.date(2025, 6, 19),
+              datetime.date(2025, 7, 4), datetime.date(2025, 9, 1),
+              datetime.date(2025, 11, 27), datetime.date(2025, 12, 25),
+              datetime.date(2026, 1, 1), datetime.date(2026, 1, 19),
+              datetime.date(2026, 2, 16), datetime.date(2026, 4, 3),
+              datetime.date(2026, 5, 25), datetime.date(2026, 6, 19),
+              datetime.date(2026, 7, 3), datetime.date(2026, 9, 7),
+              datetime.date(2026, 11, 26), datetime.date(2026, 12, 25),
+          }
+          print(f"is_trading_day={'true' if d not in holidays else 'false'}")
+          EOF
+
+      - name: Skip non-trading day
+        if: steps.market.outputs.is_trading_day == 'false'
+        run: |
+          echo "⏭ ${{ steps.date.outputs.trade_date }} is not a trading day. Skipping."
+          exit 0
+
+      # ── 6. Check max-days cap ──────────────────────────────────────────────
+      - name: Check max days cap
+        if: steps.market.outputs.is_trading_day == 'true'
+        id: cap
+        run: |
+          MAX_DAYS="${{ github.event.inputs.max_days || '20' }}"
+          python - <<EOF >> $GITHUB_OUTPUT
+          import sqlite3, pathlib
+          db = pathlib.Path("paper_trading.db")
+          if not db.exists():
+              print("reached_cap=false")
+          else:
+              conn = sqlite3.connect(db)
+              # Count distinct trading days recorded for any agent
+              row = conn.execute(
+                  "SELECT COUNT(DISTINCT date) FROM daily_snapshots"
+              ).fetchone()
+              days = row[0] if row else 0
+              conn.close()
+              reached = days >= int("$MAX_DAYS")
+              print(f"reached_cap={'true' if reached else 'false'}")
+              print(f"days_completed={days}")
+          EOF
+
+      - name: Skip — max days reached
+        if: steps.cap.outputs.reached_cap == 'true'
+        run: |
+          echo "🏁 Max days (${{ github.event.inputs.max_days || '20' }}) reached after ${{ steps.cap.outputs.days_completed }} trading days. Stopping."
+          exit 0
+
+      # ── 7. Initialise DB (idempotent — safe to run every time) ────────────
+      - name: Init paper trading
+        if: |
+          steps.market.outputs.is_trading_day == 'true' &&
+          steps.cap.outputs.reached_cap != 'true'
+        run: tradingagents init-paper-trading
+
+      # ── 8. Build earnings watchlist ────────────────────────────────────────
+      - name: Build watchlist
+        if: |
+          steps.market.outputs.is_trading_day == 'true' &&
+          steps.cap.outputs.reached_cap != 'true'
+        run: |
+          DAYS="${{ github.event.inputs.days_ahead || '3' }}"
+          tradingagents build-watchlist --source tickers.txt --days "$DAYS" --output watchlist.txt
+
+      # ── 9. Run paper trades for all agents ────────────────────────────────
+      - name: Run paper trade
+        if: |
+          steps.market.outputs.is_trading_day == 'true' &&
+          steps.cap.outputs.reached_cap != 'true'
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          tradingagents paper-trade \
+            --file watchlist.txt \
+            --date "${{ steps.date.outputs.trade_date }}"
+
+      # ── 10. Print leaderboard to the run log ──────────────────────────────
+      - name: Show leaderboard
+        if: |
+          steps.market.outputs.is_trading_day == 'true' &&
+          steps.cap.outputs.reached_cap != 'true'
+        run: tradingagents leaderboard
+
+      # ── 11. Commit DB + watchlist back to repo ────────────────────────────
+      - name: Commit results
+        if: |
+          steps.market.outputs.is_trading_day == 'true' &&
+          steps.cap.outputs.reached_cap != 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add paper_trading.db watchlist.txt
+          # Only commit if something changed
+          git diff --staged --quiet || git commit -m "chore: paper trade ${{ steps.date.outputs.trade_date }} [skip ci]"
+          git push
