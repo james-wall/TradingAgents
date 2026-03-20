@@ -1695,11 +1695,14 @@ def paper_trade(
         )
     )
 
-    # Fetch open prices once (shared across agents)
-    console.print("\n[dim]Fetching market open prices...[/dim]")
+    # Fetch closing prices once (shared across agents)
+    console.print("\n[dim]Fetching closing prices...[/dim]")
     prices = get_open_prices(tickers, trade_date)
+    missing = [t for t in tickers if t not in prices]
+    if missing:
+        console.print(f"[yellow]Warning: Could not fetch prices for: {', '.join(missing)}. Those tickers will be skipped.[/yellow]")
     if not prices:
-        console.print("[yellow]Warning: Could not fetch open prices. Trades will be skipped.[/yellow]")
+        console.print("[red]No prices fetched at all — check yfinance connectivity.[/red]")
 
     # Also get prices for any existing positions not in today's watchlist
     all_agent_tickers = set(tickers)

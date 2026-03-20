@@ -21,27 +21,33 @@ from langchain_core.messages import HumanMessage, SystemMessage
 def get_close_price(ticker: str, date_str: str) -> float | None:
     """Return the closing price for ticker on date_str (or the nearest prior trading day)."""
     try:
-        # Fetch a small window ending on/after date_str to catch the right session
-        start = datetime.strptime(date_str, "%Y-%m-%d") - timedelta(days=7)
-        end   = datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)
+        # Use period="10d" — always returns data without timezone comparison issues
         data = yf.Ticker(ticker).history(
-            start=start.strftime("%Y-%m-%d"),
-            end=end.strftime("%Y-%m-%d"),
+            period="10d",
             interval="1d",
             progress=False,
             auto_adjust=True,
         )
         if data.empty:
+            print(f"  [price] {ticker}: no data returned from yfinance")
             return None
-        # Normalize index to date-only for comparison
-        data.index = data.index.normalize()
+
+        # Strip timezone so we can compare cleanly with a date string
+        if data.index.tz is not None:
+            data.index = data.index.tz_convert(None)
+
+        # Get the most recent close on or before the target date
         target = datetime.strptime(date_str, "%Y-%m-%d")
-        # Return the close on date_str if available, otherwise the most recent prior close
-        on_date = data[data.index <= target]
-        if on_date.empty:
+        subset = data[data.index.normalize() <= target]
+        if subset.empty:
+            print(f"  [price] {ticker}: no sessions on or before {date_str}")
             return None
-        return float(on_date["Close"].iloc[-1])
-    except Exception:
+
+        price = float(subset["Close"].iloc[-1])
+        print(f"  [price] {ticker}: ${price:.2f} (close on {subset.index[-1].date()})")
+        return price
+    except Exception as e:
+        print(f"  [price] {ticker}: error — {e}")
         return None
 
 
