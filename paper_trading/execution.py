@@ -25,7 +25,6 @@ def get_close_price(ticker: str, date_str: str) -> float | None:
         data = yf.Ticker(ticker).history(
             period="10d",
             interval="1d",
-            progress=False,
             auto_adjust=True,
         )
         if data.empty:
