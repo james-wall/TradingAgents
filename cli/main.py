@@ -1876,7 +1876,8 @@ def agent_history(
     positions = get_positions(name)
     console.print(f"  Cash on hand: ${cash:,.2f}")
     if positions:
-        console.print(f"  Open positions: {', '.join(f'{t} x{p[\"shares\"]:.0f}' for t, p in positions.items())}")
+        pos_str = ", ".join(f"{t} x{p['shares']:.0f}" for t, p in positions.items())
+        console.print(f"  Open positions: {pos_str}")
     console.print()
 
     # Daily snapshots
