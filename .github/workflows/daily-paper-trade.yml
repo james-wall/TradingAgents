@@ -2,8 +2,8 @@ name: Daily Paper Trade
 
 on:
   schedule:
-    # 9:30 AM ET (13:30 UTC) Mon–Fri — market open
-    - cron: '30 13 * * 1-5'
+    # 4:30 PM ET (20:30 UTC) Mon–Fri — after market close, closing prices available
+    - cron: '30 20 * * 1-5'
   workflow_dispatch:
     inputs:
       date:

@@ -18,71 +18,46 @@ from langchain_core.messages import HumanMessage, SystemMessage
 # Price fetching
 # ---------------------------------------------------------------------------
 
-def get_open_price(ticker: str, date_str: str) -> float | None:
-    """
-    Return the market-open price for ticker on date_str.
-
-    Strategy:
-    - Today's date → yfinance doesn't serve completed OHLCV until after close,
-      so use fast_info.open (real-time) or the first 1-minute bar as fallback.
-    - Historical date → use daily history as normal.
-    """
-    import datetime as dt
+def get_close_price(ticker: str, date_str: str) -> float | None:
+    """Return the closing price for ticker on date_str (or the nearest prior trading day)."""
     try:
-        trade_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        today = dt.date.today()
-        t = yf.Ticker(ticker)
-
-        if trade_date == today:
-            # Try fast_info.open first (real-time, available once market opens)
-            try:
-                price = t.fast_info.open
-                if price and float(price) > 0:
-                    return float(price)
-            except Exception:
-                pass
-            # Fallback: first bar of today's 1-minute intraday data
-            try:
-                intraday = t.history(period="1d", interval="1m", progress=False)
-                if not intraday.empty:
-                    return float(intraday["Open"].iloc[0])
-            except Exception:
-                pass
-            # Last resort: use last_price (close enough for paper trading)
-            try:
-                price = t.fast_info.last_price
-                if price and float(price) > 0:
-                    return float(price)
-            except Exception:
-                pass
+        # Fetch a small window ending on/after date_str to catch the right session
+        start = datetime.strptime(date_str, "%Y-%m-%d") - timedelta(days=7)
+        end   = datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)
+        data = yf.Ticker(ticker).history(
+            start=start.strftime("%Y-%m-%d"),
+            end=end.strftime("%Y-%m-%d"),
+            interval="1d",
+            progress=False,
+            auto_adjust=True,
+        )
+        if data.empty:
             return None
-
-        else:
-            # Historical date — daily OHLCV is fully available
-            end = datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=5)
-            data = t.history(
-                start=date_str,
-                end=end.strftime("%Y-%m-%d"),
-                interval="1d",
-                progress=False,
-                auto_adjust=True,
-            )
-            if data.empty:
-                return None
-            return float(data["Open"].iloc[0])
-
+        # Normalize index to date-only for comparison
+        data.index = data.index.normalize()
+        target = datetime.strptime(date_str, "%Y-%m-%d")
+        # Return the close on date_str if available, otherwise the most recent prior close
+        on_date = data[data.index <= target]
+        if on_date.empty:
+            return None
+        return float(on_date["Close"].iloc[-1])
     except Exception:
         return None
 
 
-def get_open_prices(tickers: list[str], date_str: str) -> dict[str, float]:
-    """Fetch open prices for a list of tickers on a given date."""
+def get_close_prices(tickers: list[str], date_str: str) -> dict[str, float]:
+    """Fetch closing prices for a list of tickers on a given date."""
     prices = {}
     for ticker in tickers:
-        price = get_open_price(ticker, date_str)
+        price = get_close_price(ticker, date_str)
         if price is not None:
             prices[ticker] = price
     return prices
+
+
+# Keep old name as alias so existing callers don't break
+get_open_price  = get_close_price
+get_open_prices = get_close_prices
 
 
 def get_current_prices(tickers: list[str]) -> dict[str, float]:
