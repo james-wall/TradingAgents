@@ -19,20 +19,58 @@ from langchain_core.messages import HumanMessage, SystemMessage
 # ---------------------------------------------------------------------------
 
 def get_open_price(ticker: str, date_str: str) -> float | None:
-    """Return the market-open price for ticker on date_str, or None if unavailable."""
+    """
+    Return the market-open price for ticker on date_str.
+
+    Strategy:
+    - Today's date → yfinance doesn't serve completed OHLCV until after close,
+      so use fast_info.open (real-time) or the first 1-minute bar as fallback.
+    - Historical date → use daily history as normal.
+    """
+    import datetime as dt
     try:
-        date = datetime.strptime(date_str, "%Y-%m-%d")
-        end = date + timedelta(days=5)
-        data = yf.Ticker(ticker).history(
-            start=date_str,
-            end=end.strftime("%Y-%m-%d"),
-            interval="1d",
-            progress=False,
-            auto_adjust=True,
-        )
-        if data.empty:
+        trade_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        today = dt.date.today()
+        t = yf.Ticker(ticker)
+
+        if trade_date == today:
+            # Try fast_info.open first (real-time, available once market opens)
+            try:
+                price = t.fast_info.open
+                if price and float(price) > 0:
+                    return float(price)
+            except Exception:
+                pass
+            # Fallback: first bar of today's 1-minute intraday data
+            try:
+                intraday = t.history(period="1d", interval="1m", progress=False)
+                if not intraday.empty:
+                    return float(intraday["Open"].iloc[0])
+            except Exception:
+                pass
+            # Last resort: use last_price (close enough for paper trading)
+            try:
+                price = t.fast_info.last_price
+                if price and float(price) > 0:
+                    return float(price)
+            except Exception:
+                pass
             return None
-        return float(data["Open"].iloc[0])
+
+        else:
+            # Historical date — daily OHLCV is fully available
+            end = datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=5)
+            data = t.history(
+                start=date_str,
+                end=end.strftime("%Y-%m-%d"),
+                interval="1d",
+                progress=False,
+                auto_adjust=True,
+            )
+            if data.empty:
+                return None
+            return float(data["Open"].iloc[0])
+
     except Exception:
         return None
 
