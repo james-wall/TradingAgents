@@ -1662,11 +1662,15 @@ def paper_trade(
     file: str = typer.Option(..., "--file", "-f", help="Watchlist .txt file to analyse"),
     date: Optional[str] = typer.Option(None, "--date", "-d", help="Trade date YYYY-MM-DD (default: today)"),
     config_file: str = typer.Option("agent_configs.yaml", "--config", "-c", help="Agent configs YAML"),
+    agents: Optional[str] = typer.Option(None, "--agents", "-a", help="Comma-separated agent names to run (default: all)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Analyse and parse but do not write trades to DB"),
 ):
     """
     Run all paper trading agents against a watchlist for a given date.
     Executes trades at market-open prices and records daily snapshots.
+
+    Use --agents to run a subset:
+      tradingagents paper-trade -f watchlist.txt --agents claude-full-deep,gpt-earnings-fast
     """
     from paper_trading.database import init_db, get_agent, get_cash, get_positions
     from paper_trading.account import Account
@@ -1683,6 +1687,19 @@ def paper_trade(
     except FileNotFoundError as e:
         console.print(f"[red]{e}[/red]")
         raise typer.Exit(1)
+
+    # Filter to requested agents if --agents is provided
+    if agents:
+        requested = {name.strip() for name in agents.split(",")}
+        all_names = {cfg["name"] for cfg in agent_cfgs}
+        unknown = requested - all_names
+        if unknown:
+            console.print(f"[yellow]Warning: Unknown agent(s) skipped: {', '.join(sorted(unknown))}[/yellow]")
+            console.print(f"[dim]Available: {', '.join(sorted(all_names))}[/dim]")
+        agent_cfgs = [cfg for cfg in agent_cfgs if cfg["name"] in requested]
+        if not agent_cfgs:
+            console.print("[red]No matching agents found. Exiting.[/red]")
+            raise typer.Exit(1)
 
     init_db()
 

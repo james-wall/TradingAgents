@@ -18,6 +18,10 @@ on:
         description: 'Stop automatically after this many paper trading days'
         required: false
         default: '20'
+      agents:
+        description: 'Comma-separated agent names to run (default: all)'
+        required: false
+        default: ''
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -30,7 +34,7 @@ concurrency:
 jobs:
   paper-trade:
     runs-on: ubuntu-latest
-    timeout-minutes: 240  # 4 hrs — enough for 4 agents × ~10 tickers
+    timeout-minutes: 350  # ~6 hrs — enough for 8 agents × ~10 tickers
 
     steps:
       # ── 1. Checkout (with write token so we can push DB back) ──────────────
@@ -55,6 +59,7 @@ jobs:
           echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+          echo "XAI_API_KEY=${{ secrets.XAI_API_KEY }}" >> .env
 
       # ── 4. Resolve trade date ──────────────────────────────────────────────
       - name: Set trade date
@@ -196,10 +201,13 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
         run: |
+          AGENTS="${{ github.event.inputs.agents }}"
           tradingagents paper-trade \
             --file watchlist.txt \
-            --date "${{ steps.date.outputs.trade_date }}"
+            --date "${{ steps.date.outputs.trade_date }}" \
+            ${AGENTS:+--agents "$AGENTS"}
 
       # ── 10. Print leaderboard to the run log ──────────────────────────────
       - name: Show leaderboard

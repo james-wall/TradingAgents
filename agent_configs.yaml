@@ -1,13 +1,17 @@
 # Paper Trading Agent Configurations
 # Each agent gets $100k starting balance and uses a different
 # combination of models, analysts, and thinking settings.
-# Designed to isolate: thinking mode vs no-thinking, and
-# analyst breadth vs earnings-focused specialist.
+# Goal: find which model + strategy combo produces the best
+# pre-earnings trading recommendations.
 
 agents:
-  # Agent A: Full pipeline, thinking ON, deep models
-  # Hypothesis: comprehensive analysis wins for earnings plays
-  - name: "full-thinking-deep"
+  # ═══════════════════════════════════════════════════════════════
+  # GOOGLE GEMINI AGENTS
+  # ═══════════════════════════════════════════════════════════════
+
+  # Full pipeline, thinking ON, deep models
+  # Hypothesis: comprehensive analysis + deep reasoning wins for earnings plays
+  - name: "gemini-full-thinking-deep"
     llm_provider: google
     deep_think_llm: gemini-3.1-pro-preview
     quick_think_llm: gemini-3-flash-preview
@@ -20,9 +24,9 @@ agents:
     research_depth: 1
     starting_balance: 100000
 
-  # Agent B: Fundamentals + News only, thinking ON
+  # Fundamentals + News only, thinking ON
   # Hypothesis: for earnings plays, hard data beats market noise
-  - name: "earnings-specialist-thinking"
+  - name: "gemini-earnings-specialist"
     llm_provider: google
     deep_think_llm: gemini-3.1-pro-preview
     quick_think_llm: gemini-3-flash-preview
@@ -33,9 +37,9 @@ agents:
     research_depth: 1
     starting_balance: 100000
 
-  # Agent C: Full pipeline, thinking OFF, stable models
+  # Full pipeline, thinking OFF, stable models
   # Hypothesis: speed + breadth beats reasoning depth
-  - name: "full-no-thinking-fast"
+  - name: "gemini-full-fast"
     llm_provider: google
     deep_think_llm: gemini-2.5-pro
     quick_think_llm: gemini-2.5-flash
@@ -48,9 +52,9 @@ agents:
     research_depth: 1
     starting_balance: 100000
 
-  # Agent D: Market + Social only, thinking OFF
+  # Market + Social only, thinking OFF
   # Hypothesis: technical momentum + sentiment captures pre-earnings drift
-  - name: "momentum-sentiment-fast"
+  - name: "gemini-momentum-sentiment"
     llm_provider: google
     deep_think_llm: gemini-2.5-pro
     quick_think_llm: gemini-2.5-flash
@@ -59,4 +63,112 @@ agents:
       - market
       - social
     research_depth: 1
+    starting_balance: 100000
+
+  # ═══════════════════════════════════════════════════════════════
+  # ANTHROPIC CLAUDE AGENTS
+  # ═══════════════════════════════════════════════════════════════
+
+  # Full pipeline, Opus for deep reasoning, Sonnet for quick tasks
+  # Hypothesis: Claude's strong reasoning + all data = best decisions
+  - name: "claude-full-deep"
+    llm_provider: anthropic
+    deep_think_llm: claude-opus-4-6
+    quick_think_llm: claude-sonnet-4-6
+    analysts:
+      - market
+      - social
+      - news
+      - fundamentals
+    research_depth: 1
+    starting_balance: 100000
+
+  # Earnings specialist — fundamentals + news with Sonnet (cost-efficient)
+  # Hypothesis: Sonnet is good enough for focused earnings analysis
+  - name: "claude-earnings-specialist"
+    llm_provider: anthropic
+    deep_think_llm: claude-sonnet-4-6
+    quick_think_llm: claude-sonnet-4-6
+    analysts:
+      - fundamentals
+      - news
+    research_depth: 1
+    starting_balance: 100000
+
+  # ═══════════════════════════════════════════════════════════════
+  # OPENAI GPT AGENTS
+  # ═══════════════════════════════════════════════════════════════
+
+  # Full pipeline with reasoning cranked up
+  # Hypothesis: GPT-5.2 reasoning + full data = strong edge
+  - name: "gpt-full-reasoning"
+    llm_provider: openai
+    deep_think_llm: gpt-5.2
+    quick_think_llm: gpt-5-mini
+    openai_reasoning_effort: high
+    analysts:
+      - market
+      - social
+      - news
+      - fundamentals
+    research_depth: 1
+    starting_balance: 100000
+
+  # Earnings specialist — fundamentals + news, fast model
+  # Hypothesis: GPT-5-mini is fast/cheap enough for focused analysis
+  - name: "gpt-earnings-fast"
+    llm_provider: openai
+    deep_think_llm: gpt-5-mini
+    quick_think_llm: gpt-5-mini
+    analysts:
+      - fundamentals
+      - news
+    research_depth: 1
+    starting_balance: 100000
+
+  # ═══════════════════════════════════════════════════════════════
+  # CROSS-PROVIDER STRATEGY EXPERIMENTS
+  # ═══════════════════════════════════════════════════════════════
+
+  # Contrarian — technicals + fundamentals, skip social/news noise
+  # Hypothesis: when technicals diverge from fundamentals, the market
+  # overreacted and will revert. Good for post-earnings drift plays.
+  - name: "claude-contrarian"
+    llm_provider: anthropic
+    deep_think_llm: claude-sonnet-4-6
+    quick_think_llm: claude-sonnet-4-6
+    analysts:
+      - market
+      - fundamentals
+    research_depth: 1
+    starting_balance: 100000
+
+  # Catalyst/narrative — news + social only, fast model
+  # Hypothesis: pure information-flow strategy catches breaking news,
+  # insider activity, and retail sentiment surges before price moves.
+  - name: "gemini-catalyst"
+    llm_provider: google
+    deep_think_llm: gemini-2.5-flash
+    quick_think_llm: gemini-2.5-flash
+    google_thinking_level: null
+    analysts:
+      - news
+      - social
+    research_depth: 1
+    starting_balance: 100000
+
+  # Deep analysis — all analysts with 2 rounds of bull/bear debate
+  # Hypothesis: extra debate round stress-tests the thesis harder,
+  # producing better conviction filtering. Slower and more expensive.
+  - name: "gpt-deep-analysis"
+    llm_provider: openai
+    deep_think_llm: gpt-5.2
+    quick_think_llm: gpt-5-mini
+    openai_reasoning_effort: high
+    analysts:
+      - market
+      - social
+      - news
+      - fundamentals
+    research_depth: 2
     starting_balance: 100000
