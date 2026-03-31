@@ -48,6 +48,10 @@ VALID_MODELS = {
         "grok-4-fast-reasoning",
         "grok-4-fast-non-reasoning",
     ],
+    "deepseek": [
+        "deepseek-reasoner",   # DeepSeek R1 (reasoning model)
+        "deepseek-chat",       # DeepSeek V3 (fast chat model)
+    ],
 }
 
 

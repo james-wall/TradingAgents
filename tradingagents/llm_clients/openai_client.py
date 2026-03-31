@@ -43,7 +43,12 @@ class OpenAIClient(BaseLLMClient):
         """Return configured ChatOpenAI instance."""
         llm_kwargs = {"model": self.model}
 
-        if self.provider == "xai":
+        if self.provider == "deepseek":
+            llm_kwargs["base_url"] = "https://api.deepseek.com"
+            api_key = os.environ.get("DEEPSEEK_API_KEY")
+            if api_key:
+                llm_kwargs["api_key"] = api_key
+        elif self.provider == "xai":
             llm_kwargs["base_url"] = "https://api.x.ai/v1"
             api_key = os.environ.get("XAI_API_KEY")
             if api_key:

@@ -209,3 +209,33 @@ agents:
       - news
     research_depth: 1
     starting_balance: 100000
+
+  # Gemini Flash bulk + DeepSeek R1 decisions — cheapest premium option
+  # Hypothesis: R1's reasoning is strong enough for final decisions
+  # at a fraction of Sonnet's cost. Risk: R1 can be inconsistent.
+  # Estimated cost: ~$0.25 per 5 tickers.
+  - name: "hybrid-flash-deepseek"
+    llm_provider: google
+    deep_llm_provider: deepseek
+    deep_think_llm: deepseek-reasoner
+    quick_think_llm: gemini-2.5-flash
+    analysts:
+      - market
+      - social
+      - news
+      - fundamentals
+    research_depth: 1
+    starting_balance: 100000
+
+  # Gemini Flash bulk + DeepSeek R1, earnings-focused
+  # The absolute cheapest agent worth running (~$0.15 per 5 tickers)
+  - name: "hybrid-flash-deepseek-earnings"
+    llm_provider: google
+    deep_llm_provider: deepseek
+    deep_think_llm: deepseek-reasoner
+    quick_think_llm: gemini-2.5-flash
+    analysts:
+      - fundamentals
+      - news
+    research_depth: 1
+    starting_balance: 100000
