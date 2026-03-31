@@ -1449,14 +1449,40 @@ def build_watchlist(
     source: str = typer.Option("tickers.txt", "--source", "-s", help="Source tickers file (one ticker per line)"),
     output: str = typer.Option("watchlist.txt", "--output", "-o", help="Output watchlist file"),
     days: int = typer.Option(5, "--days", "-d", help="Number of business days ahead to look for earnings"),
+    strategy: str = typer.Option("pre-earnings", "--strategy", help="Strategy: pre-earnings, earnings-reversal, fomc-fade, max-pain-friday"),
+    trade_date: Optional[str] = typer.Option(None, "--trade-date", help="Reference date YYYY-MM-DD (default: today)"),
 ):
     """
-    Build a focused watchlist of tickers with earnings in the next N business days.
-    Reads from a source tickers file, checks each via yfinance, and writes matches to output.
+    Build a focused watchlist for a given trading strategy.
+
+    Strategies:
+      pre-earnings       — tickers with earnings in the next N business days (default)
+      earnings-reversal  — tickers that just reported and moved >5%
+      fomc-fade          — broad-market ETFs after a big FOMC-day move
+      max-pain-friday    — tickers far from options max pain heading into Friday expiry
     """
     import yfinance as yf
     import pandas as pd
     import numpy as np
+
+    if strategy == "pre-earnings":
+        _build_pre_earnings_watchlist(source, output, days)
+    elif strategy == "earnings-reversal":
+        _build_earnings_reversal_watchlist_cmd(source, output, trade_date)
+    elif strategy == "fomc-fade":
+        _build_fomc_fade_watchlist_cmd(output, trade_date)
+    elif strategy == "max-pain-friday":
+        _build_max_pain_friday_watchlist_cmd(source, output, trade_date)
+    else:
+        console.print(f"[red]Unknown strategy: {strategy}[/red]")
+        console.print("[dim]Available: pre-earnings, earnings-reversal, fomc-fade, max-pain-friday[/dim]")
+        raise typer.Exit(1)
+
+
+def _build_pre_earnings_watchlist(source: str, output: str, days: int):
+    """Original pre-earnings watchlist builder."""
+    import yfinance as yf
+    import pandas as pd
 
     tickers = load_tickers_from_file(source)
 
@@ -1472,7 +1498,6 @@ def build_watchlist(
     console.print()
 
     today = pd.Timestamp.today().normalize()
-    # End of window: N business days from today
     bdays = pd.bdate_range(start=today, periods=days + 1)
     window_end = bdays[-1]
 
@@ -1489,7 +1514,6 @@ def build_watchlist(
                 if earnings_date is None:
                     skipped += 1
                     continue
-                # Normalize to date only for comparison
                 ed = pd.Timestamp(earnings_date).normalize()
                 if today <= ed <= window_end:
                     earnings_tickers.append((ticker, ed.strftime("%Y-%m-%d")))
@@ -1498,14 +1522,8 @@ def build_watchlist(
 
     console.print()
 
-    # Results table
     if earnings_tickers:
-        result_table = Table(
-            show_header=True,
-            header_style="bold magenta",
-            box=box.SIMPLE_HEAD,
-            padding=(0, 2),
-        )
+        result_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
         result_table.add_column("Ticker", style="cyan", justify="center")
         result_table.add_column("Earnings Date", style="green", justify="center")
         for ticker, date in sorted(earnings_tickers, key=lambda x: x[1]):
@@ -1516,11 +1534,11 @@ def build_watchlist(
 
     console.print(f"\n[dim]Scanned: {len(tickers)} | Found: {len(earnings_tickers)} | No data: {skipped} | Errors: {len(errors)}[/dim]")
 
-    # Write output file
     if earnings_tickers:
         output_path = Path(output)
         lines = [
             f"# Earnings Watchlist",
+            f"# Strategy: pre-earnings",
             f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"# Source: {source}",
             f"# Window: next {days} business days from {today.strftime('%Y-%m-%d')}",
@@ -1530,10 +1548,145 @@ def build_watchlist(
         for ticker, date in sorted(earnings_tickers, key=lambda x: x[1]):
             lines.append(f"{ticker}    # Earnings: {date}")
         output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        console.print(f"\n[green]✓ Watchlist saved to:[/green] {output_path.resolve()}")
-        console.print(f"[dim]Run:[/dim] tradingagents analyze-portfolio --file {output}")
+        console.print(f"\n[green]Watchlist saved to:[/green] {output_path.resolve()}")
     else:
         console.print("[dim]No output file written (no matches found).[/dim]")
+
+
+def _build_earnings_reversal_watchlist_cmd(source: str, output: str, trade_date: Optional[str]):
+    """Build watchlist of post-earnings overreactions."""
+    from cli.strategies import build_earnings_reversal_watchlist
+
+    tickers = load_tickers_from_file(source)
+    console.print(
+        Panel(
+            f"[bold cyan]Earnings Reversal Watchlist[/bold cyan]\n"
+            f"[dim]Scanning {len(tickers)} tickers for recent earnings with >5% moves.[/dim]",
+            border_style="cyan", padding=(1, 2),
+        )
+    )
+
+    with console.status("[bold green]Scanning for post-earnings overreactions...[/bold green]", spinner="dots"):
+        results = build_earnings_reversal_watchlist(tickers, trade_date)
+
+    if results:
+        result_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
+        result_table.add_column("Ticker", style="cyan", justify="center")
+        result_table.add_column("Earnings", style="green", justify="center")
+        result_table.add_column("Move %", justify="right")
+        result_table.add_column("Post-Close", justify="right")
+        for ticker, edate, move, close in results:
+            color = "red" if move < 0 else "green"
+            result_table.add_row(ticker, edate, f"[{color}]{move:+.1f}%[/{color}]", f"${close:.2f}")
+        console.print(Panel(result_table, title="Post-Earnings Overreactions", border_style="green"))
+
+        output_path = Path(output)
+        lines = [
+            f"# Earnings Reversal Watchlist",
+            f"# Strategy: earnings-reversal",
+            f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"# Tickers: {len(results)}",
+            "",
+        ]
+        for ticker, edate, move, close in results:
+            lines.append(f"{ticker}    # Earnings: {edate} | Move: {move:+.1f}% | Close: ${close:.2f}")
+        output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        console.print(f"\n[green]Watchlist saved to:[/green] {output_path.resolve()}")
+    else:
+        console.print("[yellow]No post-earnings overreactions found.[/yellow]")
+        console.print("[dim]No output file written.[/dim]")
+
+
+def _build_fomc_fade_watchlist_cmd(output: str, trade_date: Optional[str]):
+    """Build watchlist of ETFs after a big FOMC-day move."""
+    from cli.strategies import build_fomc_fade_watchlist
+
+    console.print(
+        Panel(
+            f"[bold cyan]FOMC Fade Watchlist[/bold cyan]\n"
+            f"[dim]Checking if today is in an FOMC window and if markets moved.[/dim]",
+            border_style="cyan", padding=(1, 2),
+        )
+    )
+
+    with console.status("[bold green]Checking FOMC calendar and market moves...[/bold green]", spinner="dots"):
+        results = build_fomc_fade_watchlist(trade_date)
+
+    if results:
+        result_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
+        result_table.add_column("ETF", style="cyan", justify="center")
+        result_table.add_column("Move %", justify="right")
+        result_table.add_column("FOMC Date", style="green", justify="center")
+        for ticker, move, fdate in results:
+            color = "red" if move < 0 else "green"
+            result_table.add_row(ticker, f"[{color}]{move:+.2f}%[/{color}]", fdate)
+        console.print(Panel(result_table, title="FOMC Fade Candidates", border_style="green"))
+
+        output_path = Path(output)
+        lines = [
+            f"# FOMC Fade Watchlist",
+            f"# Strategy: fomc-fade",
+            f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"# Tickers: {len(results)}",
+            "",
+        ]
+        for ticker, move, fdate in results:
+            lines.append(f"{ticker}    # FOMC: {fdate} | Move: {move:+.2f}%")
+        output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        console.print(f"\n[green]Watchlist saved to:[/green] {output_path.resolve()}")
+    else:
+        console.print("[yellow]Not in an FOMC window or no significant moves detected.[/yellow]")
+        console.print("[dim]No output file written.[/dim]")
+
+
+def _build_max_pain_friday_watchlist_cmd(source: str, output: str, trade_date: Optional[str]):
+    """Build watchlist of stocks far from max pain heading into Friday."""
+    from cli.strategies import build_max_pain_friday_watchlist
+
+    tickers = load_tickers_from_file(source)
+    console.print(
+        Panel(
+            f"[bold cyan]Max Pain Friday Watchlist[/bold cyan]\n"
+            f"[dim]Scanning {len(tickers)} tickers for options max pain divergence.[/dim]",
+            border_style="cyan", padding=(1, 2),
+        )
+    )
+
+    with console.status("[bold green]Calculating max pain levels...[/bold green]", spinner="dots"):
+        results = build_max_pain_friday_watchlist(tickers, trade_date)
+
+    if not results:
+        import datetime as _dt
+        today = _dt.date.fromisoformat(trade_date) if trade_date else _dt.date.today()
+        if today.weekday() not in (2, 3):
+            console.print(f"[yellow]Today is {today.strftime('%A')} — max pain strategy only runs on Wed/Thu.[/yellow]")
+        else:
+            console.print("[yellow]No tickers found with significant max pain divergence.[/yellow]")
+        console.print("[dim]No output file written.[/dim]")
+        return
+
+    result_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE_HEAD, padding=(0, 2))
+    result_table.add_column("Ticker", style="cyan", justify="center")
+    result_table.add_column("Price", justify="right")
+    result_table.add_column("Max Pain", justify="right")
+    result_table.add_column("Distance %", justify="right")
+    for ticker, price, mp, dist in results:
+        color = "red" if dist > 0 else "green"
+        result_table.add_row(ticker, f"${price:.2f}", f"${mp:.2f}", f"[{color}]{dist:+.1f}%[/{color}]")
+    console.print(Panel(result_table, title="Max Pain Friday Candidates", border_style="green"))
+
+    output_path = Path(output)
+    lines = [
+        f"# Max Pain Friday Watchlist",
+        f"# Strategy: max-pain-friday",
+        f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"# Tickers: {len(results)}",
+        "",
+    ]
+    for ticker, price, mp, dist in results:
+        lines.append(f"{ticker}    # Price: ${price:.2f} | Max Pain: ${mp:.2f} | Distance: {dist:+.1f}%")
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    console.print(f"\n[green]Watchlist saved to:[/green] {output_path.resolve()}")
 
 
 def _get_next_earnings_date(ticker_obj):
@@ -1583,7 +1736,7 @@ def _get_next_earnings_date(ticker_obj):
 # Shared helper: run portfolio analysis programmatically (no interactive UI)
 # ---------------------------------------------------------------------------
 
-def run_portfolio_analysis_for_agent(tickers, graph_config, analyst_keys, analysis_date):
+def run_portfolio_analysis_for_agent(tickers, graph_config, analyst_keys, analysis_date, strategy=None):
     """
     Core portfolio analysis loop — usable by both interactive CLI and paper trading.
     Returns (ticker_results, portfolio_plan_text, quick_thinking_llm).
@@ -1612,7 +1765,7 @@ def run_portfolio_analysis_for_agent(tickers, graph_config, analyst_keys, analys
     portfolio_plan = None
     if valid:
         portfolio_plan = aggregate_portfolio_recommendations(
-            graph.quick_thinking_llm, valid, analysis_date
+            graph.quick_thinking_llm, valid, analysis_date, strategy=strategy
         )
 
     return ticker_results, portfolio_plan, graph.quick_thinking_llm
@@ -1663,6 +1816,7 @@ def paper_trade(
     date: Optional[str] = typer.Option(None, "--date", "-d", help="Trade date YYYY-MM-DD (default: today)"),
     config_file: str = typer.Option("agent_configs.yaml", "--config", "-c", help="Agent configs YAML"),
     agents: Optional[str] = typer.Option(None, "--agents", "-a", help="Comma-separated agent names to run (default: all)"),
+    strategy: Optional[str] = typer.Option(None, "--strategy", help="Strategy context: pre-earnings, earnings-reversal, fomc-fade, max-pain-friday"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Analyse and parse but do not write trades to DB"),
 ):
     """
@@ -1671,6 +1825,9 @@ def paper_trade(
 
     Use --agents to run a subset:
       tradingagents paper-trade -f watchlist.txt --agents claude-full-deep,gpt-earnings-fast
+
+    Use --strategy to apply strategy-specific decision making:
+      tradingagents paper-trade -f watchlist.txt --strategy earnings-reversal
     """
     from paper_trading.database import init_db, get_agent, get_cash, get_positions
     from paper_trading.account import Account
@@ -1746,7 +1903,7 @@ def paper_trade(
         # Run analysis
         with console.status(f"[green]Running analysis for {name}...[/green]", spinner="dots"):
             ticker_results, portfolio_plan, llm = run_portfolio_analysis_for_agent(
-                tickers, graph_config, analyst_keys, trade_date
+                tickers, graph_config, analyst_keys, trade_date, strategy=strategy
             )
 
         if not portfolio_plan:

@@ -1,6 +1,6 @@
 """Portfolio aggregator — combines individual ticker analyses into a weighted daily recommendation."""
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from langchain_core.messages import HumanMessage, SystemMessage
 
 
@@ -45,6 +45,7 @@ def aggregate_portfolio_recommendations(
     llm,
     ticker_results: List[Dict[str, Any]],
     analysis_date: str,
+    strategy: Optional[str] = None,
 ) -> str:
     """
     Synthesize individual ticker analyses into a weighted portfolio recommendation.
@@ -56,10 +57,13 @@ def aggregate_portfolio_recommendations(
             - signal (str): "BUY", "SELL", or "HOLD"
             - final_trade_decision (str): full decision text from the risk judge
         analysis_date: Date string (YYYY-MM-DD) for the analysis.
+        strategy: Optional strategy name for strategy-specific prompting.
 
     Returns:
         Markdown-formatted portfolio action plan string.
     """
+    from cli.strategies import get_strategy_prompt
+
     summaries = []
     for i, result in enumerate(ticker_results, 1):
         summaries.append(
@@ -75,8 +79,10 @@ def aggregate_portfolio_recommendations(
         f"{combined}"
     )
 
+    # Use strategy-specific prompt if available, otherwise default
+    system_prompt = (get_strategy_prompt(strategy) if strategy else None) or SYSTEM_PROMPT
     messages = [
-        SystemMessage(content=SYSTEM_PROMPT.format(date=analysis_date)),
+        SystemMessage(content=system_prompt.format(date=analysis_date)),
         HumanMessage(content=user_prompt),
     ]
 

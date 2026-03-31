@@ -183,17 +183,29 @@ jobs:
           steps.cap.outputs.reached_cap != 'true'
         run: tradingagents init-paper-trading
 
-      # ── 8. Build earnings watchlist ────────────────────────────────────────
-      - name: Build watchlist
+      # ── 8. Build watchlists for all strategies ──────────────────────────
+      - name: Build watchlists
         if: |
           steps.market.outputs.is_trading_day == 'true' &&
           steps.cap.outputs.reached_cap != 'true'
         run: |
           DAYS="${{ github.event.inputs.days_ahead || '3' }}"
-          tradingagents build-watchlist --source tickers.txt --days "$DAYS" --output watchlist.txt
+          DATE="${{ steps.date.outputs.trade_date }}"
 
-      # ── 9. Run paper trades for all agents ────────────────────────────────
-      - name: Run paper trade
+          echo "=== Pre-earnings watchlist ==="
+          tradingagents build-watchlist --strategy pre-earnings --source tickers.txt --days "$DAYS" --output watchlist-pre-earnings.txt || true
+
+          echo "=== Earnings reversal watchlist ==="
+          tradingagents build-watchlist --strategy earnings-reversal --source tickers.txt --trade-date "$DATE" --output watchlist-earnings-reversal.txt || true
+
+          echo "=== FOMC fade watchlist ==="
+          tradingagents build-watchlist --strategy fomc-fade --trade-date "$DATE" --output watchlist-fomc.txt || true
+
+          echo "=== Max pain Friday watchlist ==="
+          tradingagents build-watchlist --strategy max-pain-friday --source tickers.txt --trade-date "$DATE" --output watchlist-max-pain.txt || true
+
+      # ── 9. Run paper trades per strategy ─────────────────────────────────
+      - name: Run paper trades
         if: |
           steps.market.outputs.is_trading_day == 'true' &&
           steps.cap.outputs.reached_cap != 'true'
@@ -203,11 +215,48 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
         run: |
+          DATE="${{ steps.date.outputs.trade_date }}"
           AGENTS="${{ github.event.inputs.agents }}"
-          tradingagents paper-trade \
-            --file watchlist.txt \
-            --date "${{ steps.date.outputs.trade_date }}" \
-            ${AGENTS:+--agents "$AGENTS"}
+
+          # Pre-earnings (default strategy — runs all agents unless filtered)
+          if [ -f watchlist-pre-earnings.txt ]; then
+            echo "=== Running pre-earnings strategy ==="
+            tradingagents paper-trade \
+              --file watchlist-pre-earnings.txt \
+              --date "$DATE" \
+              --strategy pre-earnings \
+              ${AGENTS:+--agents "$AGENTS"} || true
+          fi
+
+          # Earnings reversal
+          if [ -f watchlist-earnings-reversal.txt ]; then
+            echo "=== Running earnings-reversal strategy ==="
+            tradingagents paper-trade \
+              --file watchlist-earnings-reversal.txt \
+              --date "$DATE" \
+              --strategy earnings-reversal \
+              ${AGENTS:+--agents "$AGENTS"} || true
+          fi
+
+          # FOMC fade (only produces watchlist on FOMC days)
+          if [ -f watchlist-fomc.txt ]; then
+            echo "=== Running fomc-fade strategy ==="
+            tradingagents paper-trade \
+              --file watchlist-fomc.txt \
+              --date "$DATE" \
+              --strategy fomc-fade \
+              ${AGENTS:+--agents "$AGENTS"} || true
+          fi
+
+          # Max pain Friday (only produces watchlist on Thu/Wed)
+          if [ -f watchlist-max-pain.txt ]; then
+            echo "=== Running max-pain-friday strategy ==="
+            tradingagents paper-trade \
+              --file watchlist-max-pain.txt \
+              --date "$DATE" \
+              --strategy max-pain-friday \
+              ${AGENTS:+--agents "$AGENTS"} || true
+          fi
 
       # ── 10. Print leaderboard to the run log ──────────────────────────────
       - name: Show leaderboard
@@ -216,7 +265,7 @@ jobs:
           steps.cap.outputs.reached_cap != 'true'
         run: tradingagents leaderboard
 
-      # ── 11. Commit DB + watchlist back to repo ────────────────────────────
+      # ── 11. Commit DB + watchlists back to repo ─────────────────────────
       - name: Commit results
         if: |
           steps.market.outputs.is_trading_day == 'true' &&
@@ -224,7 +273,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add paper_trading.db watchlist.txt
+          git add paper_trading.db watchlist*.txt
           # Only commit if something changed
           git diff --staged --quiet || git commit -m "chore: paper trade ${{ steps.date.outputs.trade_date }} [skip ci]"
           git push
