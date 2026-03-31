@@ -24,9 +24,11 @@ def agent_to_graph_config(agent_cfg: dict) -> dict:
     """Convert an agent YAML entry to a TradingAgentsGraph config dict."""
     config = DEFAULT_CONFIG.copy()
     config["llm_provider"] = agent_cfg.get("llm_provider", "openai")
+    config["deep_llm_provider"] = agent_cfg.get("deep_llm_provider")  # None = same as llm_provider
     config["deep_think_llm"] = agent_cfg.get("deep_think_llm", DEFAULT_CONFIG["deep_think_llm"])
     config["quick_think_llm"] = agent_cfg.get("quick_think_llm", DEFAULT_CONFIG["quick_think_llm"])
     config["backend_url"] = agent_cfg.get("backend_url", DEFAULT_CONFIG.get("backend_url"))
+    config["deep_backend_url"] = agent_cfg.get("deep_backend_url")
     config["google_thinking_level"] = agent_cfg.get("google_thinking_level")
     config["openai_reasoning_effort"] = agent_cfg.get("openai_reasoning_effort")
     config["max_debate_rounds"] = agent_cfg.get("research_depth", 1)

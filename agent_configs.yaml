@@ -172,3 +172,40 @@ agents:
       - fundamentals
     research_depth: 2
     starting_balance: 100000
+
+  # ═══════════════════════════════════════════════════════════════
+  # COST-OPTIMIZED HYBRID AGENTS (cross-provider)
+  # ═══════════════════════════════════════════════════════════════
+  # These use cheap Gemini Flash for the 10 "quick" calls (analysts,
+  # researchers, debaters) and a premium model for the 2 "deep" calls
+  # (research manager + risk judge) where reasoning quality matters.
+  # Estimated cost: ~$0.50-0.80 per agent per 5 tickers.
+
+  # Gemini Flash bulk + Claude Sonnet decisions — best bang for buck
+  # Hypothesis: Flash is good enough for data gathering, Sonnet
+  # excels at the final synthesis where it counts.
+  - name: "hybrid-flash-sonnet"
+    llm_provider: google
+    deep_llm_provider: anthropic
+    deep_think_llm: claude-sonnet-4-6
+    quick_think_llm: gemini-2.5-flash
+    analysts:
+      - market
+      - social
+      - news
+      - fundamentals
+    research_depth: 1
+    starting_balance: 100000
+
+  # Gemini Flash bulk + Claude Sonnet decisions, earnings-focused
+  # Cheapest meaningful agent (~$0.35 per 5 tickers)
+  - name: "hybrid-flash-sonnet-earnings"
+    llm_provider: google
+    deep_llm_provider: anthropic
+    deep_think_llm: claude-sonnet-4-6
+    quick_think_llm: gemini-2.5-flash
+    analysts:
+      - fundamentals
+      - news
+    research_depth: 1
+    starting_balance: 100000
