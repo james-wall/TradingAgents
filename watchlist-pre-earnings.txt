@@ -1,0 +1,10 @@
+# Earnings Watchlist
+# Strategy: pre-earnings
+# Generated: 2026-04-01 21:05:51
+# Source: tickers.txt
+# Window: next 3 business days from 2026-04-01
+# Tickers: 3
+
+CAG    # Earnings: 2026-04-01
+LW    # Earnings: 2026-04-01
+JBHT    # Earnings: 2026-04-03
