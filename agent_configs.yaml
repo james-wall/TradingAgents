@@ -11,10 +11,13 @@ agents:
 
   # Full pipeline, thinking ON, deep models
   # Hypothesis: comprehensive analysis + deep reasoning wins for earnings plays
+  # NOTE: Gemini 3 requires thought-signatures for tool calls, which
+  # langchain-google-genai 2.x doesn't support. Using 2.5 models until
+  # we can safely upgrade langchain. (2026-04-02)
   - name: "gemini-full-thinking-deep"
     llm_provider: google
-    deep_think_llm: gemini-3.1-pro-preview
-    quick_think_llm: gemini-3-flash-preview
+    deep_think_llm: gemini-2.5-pro
+    quick_think_llm: gemini-2.5-flash
     google_thinking_level: high
     analysts:
       - market
@@ -26,10 +29,11 @@ agents:
 
   # Fundamentals + News only, thinking ON
   # Hypothesis: for earnings plays, hard data beats market noise
+  # NOTE: Using 2.5 models — see gemini-full-thinking-deep note above.
   - name: "gemini-earnings-specialist"
     llm_provider: google
-    deep_think_llm: gemini-3.1-pro-preview
-    quick_think_llm: gemini-3-flash-preview
+    deep_think_llm: gemini-2.5-pro
+    quick_think_llm: gemini-2.5-flash
     google_thinking_level: high
     analysts:
       - fundamentals
