@@ -2,8 +2,9 @@ name: Daily Paper Trade
 
 on:
   schedule:
-    # 4:30 PM ET (20:30 UTC) Mon–Fri — after market close, closing prices available
-    - cron: '30 20 * * 1-5'
+    # 8:00 AM ET (12:00 UTC) Mon–Fri — before NYSE open (9:30 AM ET)
+    # Gives time for analysis to complete + review before placing trades
+    - cron: '0 12 * * 1-5'
   workflow_dispatch:
     inputs:
       date:
