@@ -33,35 +33,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  paper-trade:
+  # ── Gate job: skip weekends and holidays without spinning up the full runner ─
+  check-market:
     runs-on: ubuntu-latest
-    timeout-minutes: 350  # ~6 hrs — enough for 8 agents × ~10 tickers
-
+    outputs:
+      is_trading_day: ${{ steps.market.outputs.is_trading_day }}
+      trade_date: ${{ steps.date.outputs.trade_date }}
     steps:
-      # ── 1. Checkout (with write token so we can push DB back) ──────────────
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # Pull latest — DB may have been updated by a previous run
-          fetch-depth: 1
-
-      # ── 2. Python (3.11 avoids the Pydantic v1/3.14 incompatibility) ───────
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install -e .
-
-      # ── 3. Write .env from secrets ─────────────────────────────────────────
-      - name: Configure API keys
-        run: |
-          echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
-          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
-          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env
-
-      # ── 4. Resolve trade date ──────────────────────────────────────────────
       - name: Set trade date
         id: date
         run: |
@@ -71,11 +49,10 @@ jobs:
             echo "trade_date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
           fi
 
-      # ── 5. Check it's a US market trading day ─────────────────────────────
       - name: Check market day
         id: market
         run: |
-          python - <<'EOF'
+          python3 - <<'EOF' >> $GITHUB_OUTPUT
           import sys, datetime
 
           date_str = "${{ steps.date.outputs.trade_date }}"
@@ -86,45 +63,7 @@ jobs:
               print("is_trading_day=false")
               sys.exit(0)
 
-          # Known US market holidays (NYSE) through 2026
-          holidays = {
-              # 2025
-              datetime.date(2025, 1, 1),   # New Year's Day
-              datetime.date(2025, 1, 20),  # MLK Day
-              datetime.date(2025, 2, 17),  # Presidents Day
-              datetime.date(2025, 4, 18),  # Good Friday
-              datetime.date(2025, 5, 26),  # Memorial Day
-              datetime.date(2025, 6, 19),  # Juneteenth
-              datetime.date(2025, 7, 4),   # Independence Day
-              datetime.date(2025, 9, 1),   # Labor Day
-              datetime.date(2025, 11, 27), # Thanksgiving
-              datetime.date(2025, 12, 25), # Christmas
-              # 2026
-              datetime.date(2026, 1, 1),   # New Year's Day
-              datetime.date(2026, 1, 19),  # MLK Day
-              datetime.date(2026, 2, 16),  # Presidents Day
-              datetime.date(2026, 4, 3),   # Good Friday
-              datetime.date(2026, 5, 25),  # Memorial Day
-              datetime.date(2026, 6, 19),  # Juneteenth
-              datetime.date(2026, 7, 3),   # Independence Day (observed)
-              datetime.date(2026, 9, 7),   # Labor Day
-              datetime.date(2026, 11, 26), # Thanksgiving
-              datetime.date(2026, 12, 25), # Christmas
-          }
-
-          is_trading = d not in holidays
-          print(f"is_trading_day={'true' if is_trading else 'false'}")
-          EOF
-          python - <<'EOF' >> $GITHUB_OUTPUT
-          import sys, datetime
-
-          date_str = "${{ steps.date.outputs.trade_date }}"
-          d = datetime.date.fromisoformat(date_str)
-
-          if d.weekday() >= 5:
-              print("is_trading_day=false")
-              sys.exit(0)
-
+          # NYSE holidays through 2026
           holidays = {
               datetime.date(2025, 1, 1), datetime.date(2025, 1, 20),
               datetime.date(2025, 2, 17), datetime.date(2025, 4, 18),
@@ -140,26 +79,51 @@ jobs:
           print(f"is_trading_day={'true' if d not in holidays else 'false'}")
           EOF
 
-      - name: Skip non-trading day
-        if: steps.market.outputs.is_trading_day == 'false'
+      - name: Log result
         run: |
-          echo "⏭ ${{ steps.date.outputs.trade_date }} is not a trading day. Skipping."
-          exit 0
+          if [ "${{ steps.market.outputs.is_trading_day }}" = "false" ]; then
+            echo "⏭ ${{ steps.date.outputs.trade_date }} is not a trading day. Skipping." >> $GITHUB_STEP_SUMMARY
+          fi
 
-      # ── 6. Check max-days cap ──────────────────────────────────────────────
+  # ── Main job: only runs on trading days ──────────────────────────────────────
+  paper-trade:
+    needs: check-market
+    if: needs.check-market.outputs.is_trading_day == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Configure API keys
+        run: |
+          echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
+          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env
+
+      # ── Check max-days cap ─────────────────────────────────────────────────
       - name: Check max days cap
-        if: steps.market.outputs.is_trading_day == 'true'
         id: cap
         run: |
           MAX_DAYS="${{ github.event.inputs.max_days || '20' }}"
-          python - <<EOF >> $GITHUB_OUTPUT
+          python3 - <<EOF >> $GITHUB_OUTPUT
           import sqlite3, pathlib
           db = pathlib.Path("paper_trading.db")
           if not db.exists():
               print("reached_cap=false")
           else:
               conn = sqlite3.connect(db)
-              # Count distinct trading days recorded for any agent
               row = conn.execute(
                   "SELECT COUNT(DISTINCT date) FROM daily_snapshots"
               ).fetchone()
@@ -173,24 +137,18 @@ jobs:
       - name: Skip — max days reached
         if: steps.cap.outputs.reached_cap == 'true'
         run: |
-          echo "🏁 Max days (${{ github.event.inputs.max_days || '20' }}) reached after ${{ steps.cap.outputs.days_completed }} trading days. Stopping."
-          exit 0
+          echo "🏁 Max days (${{ github.event.inputs.max_days || '20' }}) reached after ${{ steps.cap.outputs.days_completed }} trading days." >> $GITHUB_STEP_SUMMARY
+          exit 1
 
-      # ── 7. Initialise DB (idempotent — safe to run every time) ────────────
+      # ── Init DB ────────────────────────────────────────────────────────────
       - name: Init paper trading
-        if: |
-          steps.market.outputs.is_trading_day == 'true' &&
-          steps.cap.outputs.reached_cap != 'true'
         run: tradingagents init-paper-trading
 
-      # ── 8. Build watchlists for all strategies ──────────────────────────
+      # ── Build watchlists ───────────────────────────────────────────────────
       - name: Build watchlists
-        if: |
-          steps.market.outputs.is_trading_day == 'true' &&
-          steps.cap.outputs.reached_cap != 'true'
         run: |
           DAYS="${{ github.event.inputs.days_ahead || '3' }}"
-          DATE="${{ steps.date.outputs.trade_date }}"
+          DATE="${{ needs.check-market.outputs.trade_date }}"
 
           echo "=== Pre-earnings watchlist ==="
           tradingagents build-watchlist --strategy pre-earnings --source tickers.txt --days "$DAYS" --output watchlist-pre-earnings.txt || true
@@ -204,17 +162,14 @@ jobs:
           echo "=== Max pain Friday watchlist ==="
           tradingagents build-watchlist --strategy max-pain-friday --source tickers.txt --trade-date "$DATE" --output watchlist-max-pain.txt || true
 
-      # ── 9. Run paper trades per strategy ─────────────────────────────────
+      # ── Run paper trades ───────────────────────────────────────────────────
       - name: Run paper trades
-        if: |
-          steps.market.outputs.is_trading_day == 'true' &&
-          steps.cap.outputs.reached_cap != 'true'
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
-          DATE="${{ steps.date.outputs.trade_date }}"
+          DATE="${{ needs.check-market.outputs.trade_date }}"
           AGENTS="${{ github.event.inputs.agents }}"
 
           # Default agent set: cost-optimized hybrids + one pure agent per provider.
@@ -223,7 +178,6 @@ jobs:
           DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist"
           AGENTS="${AGENTS:-$DEFAULT_AGENTS}"
 
-          # Pre-earnings (default strategy — runs all agents unless filtered)
           if [ -f watchlist-pre-earnings.txt ]; then
             echo "=== Running pre-earnings strategy ==="
             tradingagents paper-trade \
@@ -233,7 +187,6 @@ jobs:
               --agents "$AGENTS" || true
           fi
 
-          # Earnings reversal
           if [ -f watchlist-earnings-reversal.txt ]; then
             echo "=== Running earnings-reversal strategy ==="
             tradingagents paper-trade \
@@ -243,7 +196,6 @@ jobs:
               --agents "$AGENTS" || true
           fi
 
-          # FOMC fade (only produces watchlist on FOMC days)
           if [ -f watchlist-fomc.txt ]; then
             echo "=== Running fomc-fade strategy ==="
             tradingagents paper-trade \
@@ -253,7 +205,6 @@ jobs:
               --agents "$AGENTS" || true
           fi
 
-          # Max pain Friday (only produces watchlist on Thu/Wed)
           if [ -f watchlist-max-pain.txt ]; then
             echo "=== Running max-pain-friday strategy ==="
             tradingagents paper-trade \
@@ -263,25 +214,84 @@ jobs:
               --agents "$AGENTS" || true
           fi
 
-      # ── 10. Print leaderboard to the run log ──────────────────────────────
+      # ── Job summary ────────────────────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        run: |
+          DATE="${{ needs.check-market.outputs.trade_date }}"
+
+          python3 - <<'PYEOF' >> $GITHUB_STEP_SUMMARY
+          import sqlite3, pathlib, datetime
+
+          date = "$DATE"
+          db = pathlib.Path("paper_trading.db")
+          if not db.exists():
+              print("No database found.")
+              raise SystemExit(0)
+
+          conn = sqlite3.connect(db)
+
+          # Today's trades
+          trades = conn.execute(
+              "SELECT agent_name, ticker, action, shares, price, total "
+              "FROM trades WHERE date = ? ORDER BY agent_name, ticker", (date,)
+          ).fetchall()
+
+          # Leaderboard (latest snapshot per agent)
+          leaderboard = conn.execute("""
+              SELECT s.agent_name, s.portfolio_value, s.cash, s.positions_value,
+                     s.daily_return_pct, s.total_return_pct, s.date
+              FROM daily_snapshots s
+              INNER JOIN (
+                  SELECT agent_name, MAX(date) as max_date
+                  FROM daily_snapshots GROUP BY agent_name
+              ) latest ON s.agent_name = latest.agent_name AND s.date = latest.max_date
+              ORDER BY s.portfolio_value DESC
+          """).fetchall()
+
+          conn.close()
+
+          print(f"# Paper Trade Report — {date}\n")
+
+          # Trades section
+          if trades:
+              print("## Today's Trades\n")
+              print("| Agent | Ticker | Action | Shares | Price | Total |")
+              print("|-------|--------|--------|-------:|------:|------:|")
+              for agent, ticker, action, shares, price, total in trades:
+                  shares_str = f"{shares}" if shares else "—"
+                  price_str = f"${price:,.2f}" if price else "—"
+                  total_str = f"${total:,.2f}" if total else "—"
+                  print(f"| {agent} | {ticker} | {action} | {shares_str} | {price_str} | {total_str} |")
+              print()
+          else:
+              print("## Today's Trades\n")
+              print("No trades executed today (all agents held or no watchlist matches).\n")
+
+          # Leaderboard section
+          if leaderboard:
+              print("## Leaderboard\n")
+              print("| # | Agent | Portfolio | Cash | Positions | Day | Total | Last Update |")
+              print("|--:|-------|----------:|-----:|----------:|----:|------:|-------------|")
+              for i, (agent, port, cash, pos, day_ret, tot_ret, dt) in enumerate(leaderboard, 1):
+                  day_str = f"{day_ret:+.2f}%" if day_ret is not None else "—"
+                  tot_str = f"{tot_ret:+.2f}%" if tot_ret is not None else "—"
+                  print(f"| {i} | {agent} | ${port:,.0f} | ${cash:,.0f} | ${pos:,.0f} | {day_str} | {tot_str} | {dt} |")
+          PYEOF
+
+      # ── Show leaderboard in logs too ───────────────────────────────────────
       - name: Show leaderboard
-        if: |
-          steps.market.outputs.is_trading_day == 'true' &&
-          steps.cap.outputs.reached_cap != 'true'
         run: tradingagents leaderboard
 
-      # ── 11. Commit DB + watchlists back to repo ─────────────────────────
+      # ── Commit results ─────────────────────────────────────────────────────
       - name: Commit results
-        if: |
-          steps.market.outputs.is_trading_day == 'true' &&
-          steps.cap.outputs.reached_cap != 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add paper_trading.db watchlist*.txt
           # Only commit if something changed
           git diff --staged --quiet && exit 0
-          git commit -m "chore: paper trade ${{ steps.date.outputs.trade_date }} [skip ci]"
+          git commit -m "chore: paper trade ${{ needs.check-market.outputs.trade_date }} [skip ci]"
           # Pull any changes pushed while we were running, then push
           git pull --rebase
           git push
