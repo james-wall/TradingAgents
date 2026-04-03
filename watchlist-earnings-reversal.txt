@@ -1,10 +1,6 @@
 # Earnings Reversal Watchlist
 # Strategy: earnings-reversal
-# Generated: 2026-04-01 21:12:31
-# Tickers: 5
+# Generated: 2026-04-03 17:40:41
+# Tickers: 1
 
-NKE    # Earnings: 2026-03-31 | Move: -12.9% | Close: $44.63
-FDS    # Earnings: 2026-03-31 | Move: +9.9% | Close: $224.86
-MKC    # Earnings: 2026-03-31 | Move: -9.9% | Close: $48.38
-LW    # Earnings: 2026-04-01 | Move: -8.9% | Close: $38.48
-CCL    # Earnings: 2026-03-27 | Move: +5.1% | Close: $26.58
+CCL    # Earnings: 2026-03-27 | Move: -5.2% | Close: $23.96
