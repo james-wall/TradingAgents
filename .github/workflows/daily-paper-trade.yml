@@ -233,14 +233,14 @@ jobs:
 
           # Today's trades
           trades = conn.execute(
-              "SELECT agent_name, ticker, action, shares, price, total "
+              "SELECT agent_name, ticker, action, shares, price, total_value "
               "FROM trades WHERE date = ? ORDER BY agent_name, ticker", (date,)
           ).fetchall()
 
           # Leaderboard (latest snapshot per agent)
           leaderboard = conn.execute("""
               SELECT s.agent_name, s.portfolio_value, s.cash, s.positions_value,
-                     s.daily_return_pct, s.total_return_pct, s.date
+                     s.daily_return_pct, s.cumulative_return_pct, s.date
               FROM daily_snapshots s
               INNER JOIN (
                   SELECT agent_name, MAX(date) as max_date
