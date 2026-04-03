@@ -58,9 +58,7 @@ jobs:
       - name: Configure API keys
         run: |
           echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
-          echo "XAI_API_KEY=${{ secrets.XAI_API_KEY }}" >> .env
           echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env
 
       # ── 4. Resolve trade date ──────────────────────────────────────────────
@@ -213,13 +211,17 @@ jobs:
           steps.cap.outputs.reached_cap != 'true'
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           DATE="${{ steps.date.outputs.trade_date }}"
           AGENTS="${{ github.event.inputs.agents }}"
+
+          # Default agent set: cost-optimized hybrids + one pure agent per provider.
+          # Requires only GOOGLE, ANTHROPIC, and DEEPSEEK API keys.
+          # Override via workflow_dispatch "agents" input.
+          DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist"
+          AGENTS="${AGENTS:-$DEFAULT_AGENTS}"
 
           # Pre-earnings (default strategy — runs all agents unless filtered)
           if [ -f watchlist-pre-earnings.txt ]; then
@@ -228,7 +230,7 @@ jobs:
               --file watchlist-pre-earnings.txt \
               --date "$DATE" \
               --strategy pre-earnings \
-              ${AGENTS:+--agents "$AGENTS"} || true
+              --agents "$AGENTS" || true
           fi
 
           # Earnings reversal
@@ -238,7 +240,7 @@ jobs:
               --file watchlist-earnings-reversal.txt \
               --date "$DATE" \
               --strategy earnings-reversal \
-              ${AGENTS:+--agents "$AGENTS"} || true
+              --agents "$AGENTS" || true
           fi
 
           # FOMC fade (only produces watchlist on FOMC days)
@@ -248,7 +250,7 @@ jobs:
               --file watchlist-fomc.txt \
               --date "$DATE" \
               --strategy fomc-fade \
-              ${AGENTS:+--agents "$AGENTS"} || true
+              --agents "$AGENTS" || true
           fi
 
           # Max pain Friday (only produces watchlist on Thu/Wed)
@@ -258,7 +260,7 @@ jobs:
               --file watchlist-max-pain.txt \
               --date "$DATE" \
               --strategy max-pain-friday \
-              ${AGENTS:+--agents "$AGENTS"} || true
+              --agents "$AGENTS" || true
           fi
 
       # ── 10. Print leaderboard to the run log ──────────────────────────────
@@ -278,5 +280,8 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add paper_trading.db watchlist*.txt
           # Only commit if something changed
-          git diff --staged --quiet || git commit -m "chore: paper trade ${{ steps.date.outputs.trade_date }} [skip ci]"
+          git diff --staged --quiet && exit 0
+          git commit -m "chore: paper trade ${{ steps.date.outputs.trade_date }} [skip ci]"
+          # Pull any changes pushed while we were running, then push
+          git pull --rebase
           git push
