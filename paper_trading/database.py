@@ -133,12 +133,14 @@ def upsert_position(agent_name, ticker, shares, avg_cost, conn=None):
                 c.execute(sql_up, (agent_name, ticker, shares, avg_cost))
 
 
-def record_trade(agent_name, date, ticker, action, shares, price, conviction_weight=None, notes=None):
-    with get_connection() as conn:
-        conn.execute(
-            "INSERT INTO trades (agent_name, date, ticker, action, shares, price, total_value, conviction_weight, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (agent_name, date, ticker, action, shares, price, shares * price, conviction_weight, notes),
-        )
+def record_trade(agent_name, date, ticker, action, shares, price, conviction_weight=None, notes=None, conn=None):
+    sql = "INSERT INTO trades (agent_name, date, ticker, action, shares, price, total_value, conviction_weight, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    params = (agent_name, date, ticker, action, shares, price, shares * price, conviction_weight, notes)
+    if conn:
+        conn.execute(sql, params)
+    else:
+        with get_connection() as c:
+            c.execute(sql, params)
 
 
 def record_snapshot(agent_name, date, cash, positions_value, starting_balance):

@@ -217,13 +217,13 @@ jobs:
       # ── Job summary ────────────────────────────────────────────────────────
       - name: Write job summary
         if: always()
+        env:
+          TRADE_DATE: ${{ needs.check-market.outputs.trade_date }}
         run: |
-          DATE="${{ needs.check-market.outputs.trade_date }}"
+          python3 - <<'PYEOF' >> $GITHUB_STEP_SUMMARY
+          import os, sqlite3, pathlib, datetime
 
-          python3 - <<PYEOF >> $GITHUB_STEP_SUMMARY
-          import sqlite3, pathlib, datetime
-
-          date = "$DATE"
+          date = os.environ["TRADE_DATE"]
           db = pathlib.Path("paper_trading.db")
           if not db.exists():
               print("No database found.")

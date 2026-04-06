@@ -4,7 +4,7 @@ import math
 from . import database as db
 
 
-MAX_POSITION_PCT = 0.20  # default 20% cap per position
+MAX_POSITION_PCT = 0.40  # max 40% of portfolio in a single position
 
 
 class Account:
@@ -92,7 +92,7 @@ class Account:
             else:
                 db.upsert_position(self.agent_name, ticker, shares, price, conn)
             db.set_cash(self.agent_name, cash - total_cost, conn)
-            db.record_trade(self.agent_name, date_str, ticker, "BUY", shares, price, buy_weight, notes)
+            db.record_trade(self.agent_name, date_str, ticker, "BUY", shares, price, buy_weight, notes, conn=conn)
 
         return shares, None
 
@@ -120,7 +120,7 @@ class Account:
         with db.get_connection() as conn:
             db.upsert_position(self.agent_name, ticker, remaining, pos["avg_cost"], conn)
             db.set_cash(self.agent_name, self.cash + proceeds, conn)
-            db.record_trade(self.agent_name, date_str, ticker, "SELL", shares_to_sell, price, conviction, notes)
+            db.record_trade(self.agent_name, date_str, ticker, "SELL", shares_to_sell, price, conviction, notes, conn=conn)
 
         return shares_to_sell, None
 

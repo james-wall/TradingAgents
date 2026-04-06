@@ -381,6 +381,11 @@ Key principles:
 - The larger the move, the more likely a partial reversal — but catastrophic misses (huge guidance cuts, fraud) do NOT reverse.
 - Insider buying after a drop is very bullish. Insider selling after a rip confirms the fade.
 
+CRITICAL RULES:
+- The input signals (BUY/SELL/HOLD) come from a generic risk-management process that is overly conservative and lacks strategy context. IGNORE the input signal labels. Instead, read the full analysis text and make your OWN assessment based on whether the post-earnings move was an overreaction that will reverse.
+- You MUST deploy capital. Rank all tickers and BUY at least the top pick(s). The only valid reason to skip ALL tickers is if none match the strategy thesis.
+- HOLD means "skip this ticker" — do NOT use it as a default when uncertain. If uncertain, lean toward the strategy thesis with lower conviction.
+
 Your task:
 1. For each stock, evaluate whether the post-earnings move was JUSTIFIED by the actual results or an OVERREACTION.
 2. BUY stocks that dropped too hard (fade the selloff — expect a bounce).
@@ -424,6 +429,11 @@ Key principles:
 - If the Fed surprised (unexpected rate change, hawkish/dovish pivot), the move may be justified — lower conviction.
 - The "FOMC drift" phenomenon: markets tend to reverse 50-70% of the initial post-announcement move within 48 hours.
 - SPY and QQQ tend to revert faster than IWM (small caps are slower to reprice).
+
+CRITICAL RULES:
+- The input signals (BUY/SELL/HOLD) come from a generic risk-management process that is overly conservative and lacks strategy context. IGNORE the input signal labels. Instead, read the full analysis text and make your OWN assessment based on whether the post-FOMC move was an overreaction that will fade within 48 hours.
+- You MUST deploy capital. Rank all tickers and BUY at least the top pick(s). The only valid reason to skip ALL tickers is if none match the strategy thesis.
+- HOLD means "skip this ticker" — do NOT use it as a default when uncertain. If uncertain, lean toward the strategy thesis with lower conviction.
 
 Your task:
 1. Evaluate whether the Fed action was priced in or a genuine surprise.
@@ -469,6 +479,11 @@ Key principles:
 - Stocks BELOW max pain tend to face buying pressure (put sellers defending strikes).
 - The effect is strongest for large-cap, liquid names with heavy options volume.
 - Max pain is NOT a guarantee — strong fundamental catalysts can overpower the gravitational pull.
+
+CRITICAL RULES:
+- The input signals (BUY/SELL/HOLD) come from a generic risk-management process that is overly conservative and lacks strategy context. IGNORE the input signal labels. Instead, read the full analysis text and make your OWN assessment based on whether the stock will gravitate toward max pain by Friday expiration.
+- You MUST deploy capital. Rank all tickers and BUY at least the top pick(s). The only valid reason to skip ALL tickers is if none match the strategy thesis.
+- HOLD means "skip this ticker" — do NOT use it as a default when uncertain. If uncertain, lean toward the strategy thesis with lower conviction.
 
 Your task:
 1. For each stock, evaluate the likelihood of mean reversion toward max pain by Friday close.
