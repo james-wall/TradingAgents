@@ -216,7 +216,7 @@ jobs:
 
       # ── Job summary ────────────────────────────────────────────────────────
       - name: Write job summary
-        if: always()
+        if: "!cancelled()"
         env:
           TRADE_DATE: ${{ needs.check-market.outputs.trade_date }}
         run: |

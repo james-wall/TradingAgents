@@ -178,7 +178,8 @@ def execute_paper_trades(account, actions: list[dict], date_str: str, prices: di
         if price is None:
             results.append({"ticker": ticker, "action": "BUY", "status": "SKIPPED", "reason": "No price data"})
             continue
-        buy_weight = action.get("buy_weight") or (action.get("conviction") or 5) / 10.0
+        raw_weight = action.get("buy_weight")
+        buy_weight = float(raw_weight) if raw_weight is not None else (action.get("conviction") or 5) / 10.0
         shares, err = account.execute_buy(ticker, price, buy_weight, date_str)
         if err:
             results.append({"ticker": ticker, "action": "BUY", "status": "FAILED", "reason": err})

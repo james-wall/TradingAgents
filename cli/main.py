@@ -1906,8 +1906,17 @@ def paper_trade(
                 tickers, graph_config, analyst_keys, trade_date, strategy=strategy
             )
 
+        # Log per-ticker results so failures are visible
+        errors = [r for r in ticker_results if r["signal"] == "ERROR"]
+        if errors:
+            for r in errors:
+                console.print(f"  [red]ERROR on {r['ticker']}: {r['final_trade_decision'][:120]}[/red]")
+
         if not portfolio_plan:
-            console.print("  [yellow]No portfolio plan generated — skipping trades.[/yellow]")
+            if not [r for r in ticker_results if r["signal"] != "ERROR"]:
+                console.print("  [red]All tickers failed analysis — no portfolio plan possible.[/red]")
+            else:
+                console.print("  [yellow]No portfolio plan generated — skipping trades.[/yellow]")
             continue
 
         # Parse plan into structured actions
@@ -1915,7 +1924,8 @@ def paper_trade(
             actions = ppp(llm, portfolio_plan)
 
         if not actions:
-            console.print("  [yellow]Could not parse trade actions from plan.[/yellow]")
+            console.print("  [yellow]Could not parse trade actions from plan. Raw plan (first 200 chars):[/yellow]")
+            console.print(f"  [dim]{portfolio_plan[:200]}[/dim]")
             continue
 
         console.print(f"  Parsed [bold]{len(actions)}[/bold] trade action(s).")
