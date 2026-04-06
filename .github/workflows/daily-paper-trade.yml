@@ -288,7 +288,8 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add paper_trading.db watchlist*.txt
+          git add paper_trading.db
+          git add watchlist*.txt 2>/dev/null || true
           # Only commit if something changed
           git diff --staged --quiet && exit 0
           git commit -m "chore: paper trade ${{ needs.check-market.outputs.trade_date }} [skip ci]"

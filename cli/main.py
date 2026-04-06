@@ -1831,13 +1831,16 @@ def paper_trade(
     """
     from paper_trading.database import init_db, get_agent, get_cash, get_positions
     from paper_trading.account import Account
-    from paper_trading.execution import get_open_prices, get_current_prices as gcp, parse_portfolio_plan, execute_paper_trades
+    from paper_trading.execution import get_open_prices, get_current_prices as gcp, execute_paper_trades
     from paper_trading.config import load_agent_configs, agent_to_graph_config, get_analyst_keys
     from cli.portfolio_aggregator import parse_portfolio_plan as ppp
 
     trade_date = date or datetime.datetime.now().strftime("%Y-%m-%d")
 
     tickers = load_tickers_from_file(file)
+    if not tickers:
+        console.print("[yellow]Watchlist is empty — nothing to trade.[/yellow]")
+        raise typer.Exit(0)
 
     try:
         agent_cfgs = load_agent_configs(config_file)
@@ -1876,7 +1879,8 @@ def paper_trade(
     if missing:
         console.print(f"[yellow]Warning: Could not fetch prices for: {', '.join(missing)}. Those tickers will be skipped.[/yellow]")
     if not prices:
-        console.print("[red]No prices fetched at all — check yfinance connectivity.[/red]")
+        console.print("[red]No prices fetched at all — check yfinance connectivity. Skipping all agents.[/red]")
+        raise typer.Exit(1)
 
     # Also get prices for any existing positions not in today's watchlist
     all_agent_tickers = set(tickers)
