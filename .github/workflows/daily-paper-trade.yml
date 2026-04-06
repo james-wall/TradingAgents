@@ -220,7 +220,7 @@ jobs:
         run: |
           DATE="${{ needs.check-market.outputs.trade_date }}"
 
-          python3 - <<'PYEOF' >> $GITHUB_STEP_SUMMARY
+          python3 - <<PYEOF >> $GITHUB_STEP_SUMMARY
           import sqlite3, pathlib, datetime
 
           date = "$DATE"
