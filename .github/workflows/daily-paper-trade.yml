@@ -23,6 +23,10 @@ on:
         description: 'Comma-separated agent names to run (default: all)'
         required: false
         default: ''
+      extra_strategies:
+        description: 'Run earnings-reversal, fomc-fade, max-pain-friday in addition to pre-earnings'
+        required: false
+        default: 'false'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -163,7 +167,9 @@ jobs:
           tradingagents build-watchlist --strategy max-pain-friday --source tickers.txt --trade-date "$DATE" --output watchlist-max-pain.txt || true
 
       # ── Run paper trades ───────────────────────────────────────────────────
-      - name: Run paper trades
+      # Each strategy gets its own step so we can commit incrementally.
+      # If a later strategy times out, earlier ones are already committed.
+      - name: Run pre-earnings strategy
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -171,10 +177,6 @@ jobs:
         run: |
           DATE="${{ needs.check-market.outputs.trade_date }}"
           AGENTS="${{ github.event.inputs.agents }}"
-
-          # Default agent set: cost-optimized hybrids + one pure agent per provider.
-          # Requires only GOOGLE, ANTHROPIC, and DEEPSEEK API keys.
-          # Override via workflow_dispatch "agents" input.
           DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist"
           AGENTS="${AGENTS:-$DEFAULT_AGENTS}"
 
@@ -186,6 +188,32 @@ jobs:
               --strategy pre-earnings \
               --agents "$AGENTS" || true
           fi
+
+      - name: Commit pre-earnings results
+        if: always()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add paper_trading.db 2>/dev/null || true
+          git add watchlist*.txt 2>/dev/null || true
+          git diff --staged --quiet && exit 0
+          git commit -m "chore: paper trade pre-earnings ${{ needs.check-market.outputs.trade_date }} [skip ci]"
+          git pull --rebase
+          git push
+
+      # Other strategies are opt-in via workflow_dispatch input "extra_strategies"
+      # to keep scheduled runs fast. Set to "true" to enable all strategies.
+      - name: Run extra strategies (earnings-reversal, fomc-fade, max-pain-friday)
+        if: github.event.inputs.extra_strategies == 'true'
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          DATE="${{ needs.check-market.outputs.trade_date }}"
+          AGENTS="${{ github.event.inputs.agents }}"
+          DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist"
+          AGENTS="${AGENTS:-$DEFAULT_AGENTS}"
 
           if [ -f watchlist-earnings-reversal.txt ]; then
             echo "=== Running earnings-reversal strategy ==="
@@ -216,7 +244,7 @@ jobs:
 
       # ── Job summary ────────────────────────────────────────────────────────
       - name: Write job summary
-        if: "!cancelled()"
+        if: always()
         env:
           TRADE_DATE: ${{ needs.check-market.outputs.trade_date }}
         run: |
@@ -281,10 +309,12 @@ jobs:
 
       # ── Show leaderboard in logs too ───────────────────────────────────────
       - name: Show leaderboard
-        run: tradingagents leaderboard
+        if: always()
+        run: tradingagents leaderboard || true
 
-      # ── Commit results ─────────────────────────────────────────────────────
+      # ── Final commit (catches anything from extra strategies) ──────────────
       - name: Commit results
+        if: always()
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
