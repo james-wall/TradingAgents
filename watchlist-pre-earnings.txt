@@ -1,11 +1,14 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-08 13:27:18
+# Generated: 2026-04-09 13:50:06
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-08
-# Tickers: 4
+# Window: next 3 business days from 2026-04-09
+# Tickers: 7
 
-DAL    # Earnings: 2026-04-08
-STZ    # Earnings: 2026-04-08
 GS    # Earnings: 2026-04-13
 FAST    # Earnings: 2026-04-13
+JNJ    # Earnings: 2026-04-14
+JPM    # Earnings: 2026-04-14
+BLK    # Earnings: 2026-04-14
+C    # Earnings: 2026-04-14
+WFC    # Earnings: 2026-04-14
