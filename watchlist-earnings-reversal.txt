@@ -1,6 +1,6 @@
 # Earnings Reversal Watchlist
 # Strategy: earnings-reversal
-# Generated: 2026-04-10 13:26:39
+# Generated: 2026-04-13 13:53:46
 # Tickers: 1
 
-STZ    # Earnings: 2026-04-08 | Move: +6.0% | Close: $163.07
+STZ    # Earnings: 2026-04-08 | Move: +6.8% | Close: $164.21
