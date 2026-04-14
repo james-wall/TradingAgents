@@ -1,6 +1,7 @@
 # Earnings Reversal Watchlist
 # Strategy: earnings-reversal
-# Generated: 2026-04-13 13:53:46
-# Tickers: 1
+# Generated: 2026-04-14 13:58:04
+# Tickers: 2
 
-STZ    # Earnings: 2026-04-08 | Move: +6.8% | Close: $164.21
+FAST    # Earnings: 2026-04-13 | Move: -9.6% | Close: $44.47
+WFC    # Earnings: 2026-04-14 | Move: -5.2% | Close: $82.16
