@@ -1,5 +1,6 @@
 from typing import Optional
 import datetime
+import random
 import typer
 from pathlib import Path
 from functools import wraps
@@ -1817,6 +1818,7 @@ def paper_trade(
     config_file: str = typer.Option("agent_configs.yaml", "--config", "-c", help="Agent configs YAML"),
     agents: Optional[str] = typer.Option(None, "--agents", "-a", help="Comma-separated agent names to run (default: all)"),
     strategy: Optional[str] = typer.Option(None, "--strategy", help="Strategy context: pre-earnings, earnings-reversal, fomc-fade, max-pain-friday"),
+    max_tickers: int = typer.Option(5, "--max-tickers", "-n", help="Max tickers per agent (takes first N from watchlist)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Analyse and parse but do not write trades to DB"),
 ):
     """
@@ -1842,6 +1844,12 @@ def paper_trade(
         console.print("[yellow]Watchlist is empty — nothing to trade.[/yellow]")
         raise typer.Exit(0)
 
+    # Cap tickers to --max-tickers (takes the first N from the watchlist,
+    # which is already sorted by nearest earnings date)
+    if max_tickers and len(tickers) > max_tickers:
+        console.print(f"[dim]Capping watchlist from {len(tickers)} to {max_tickers} tickers.[/dim]")
+        tickers = tickers[:max_tickers]
+
     try:
         agent_cfgs = load_agent_configs(config_file)
     except FileNotFoundError as e:
@@ -1860,6 +1868,11 @@ def paper_trade(
         if not agent_cfgs:
             console.print("[red]No matching agents found. Exiting.[/red]")
             raise typer.Exit(1)
+
+    # Shuffle agent order using trade date as seed so each day gets a
+    # different order but the same day is reproducible.  This prevents
+    # the same agents from being starved by CI timeout every run.
+    random.Random(trade_date).shuffle(agent_cfgs)
 
     init_db()
 
