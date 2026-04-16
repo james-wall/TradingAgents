@@ -1,17 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-15 13:52:21
+# Generated: 2026-04-16 13:55:04
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-15
-# Tickers: 20
+# Window: next 3 business days from 2026-04-16
+# Tickers: 32
 
-BAC    # Earnings: 2026-04-15
-JBHT    # Earnings: 2026-04-15
-KMI    # Earnings: 2026-04-15
-MS    # Earnings: 2026-04-15
-MTB    # Earnings: 2026-04-15
-PNC    # Earnings: 2026-04-15
-ASML    # Earnings: 2026-04-15
 TRV    # Earnings: 2026-04-16
 ABT    # Earnings: 2026-04-16
 BK    # Earnings: 2026-04-16
@@ -25,3 +18,22 @@ FITB    # Earnings: 2026-04-17
 RF    # Earnings: 2026-04-17
 STT    # Earnings: 2026-04-17
 TFC    # Earnings: 2026-04-17
+MMM    # Earnings: 2026-04-21
+UNH    # Earnings: 2026-04-21
+CB    # Earnings: 2026-04-21
+COF    # Earnings: 2026-04-21
+DHI    # Earnings: 2026-04-21
+DHR    # Earnings: 2026-04-21
+EFX    # Earnings: 2026-04-21
+EQT    # Earnings: 2026-04-21
+GPC    # Earnings: 2026-04-21
+HAL    # Earnings: 2026-04-21
+ISRG    # Earnings: 2026-04-21
+IBKR    # Earnings: 2026-04-21
+MSCI    # Earnings: 2026-04-21
+NTRS    # Earnings: 2026-04-21
+RTX    # Earnings: 2026-04-21
+SYF    # Earnings: 2026-04-21
+TSCO    # Earnings: 2026-04-21
+UAL    # Earnings: 2026-04-21
+WRB    # Earnings: 2026-04-21
