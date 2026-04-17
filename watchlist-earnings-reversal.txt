@@ -1,8 +1,9 @@
 # Earnings Reversal Watchlist
 # Strategy: earnings-reversal
-# Generated: 2026-04-16 14:02:13
-# Tickers: 3
+# Generated: 2026-04-17 13:38:02
+# Tickers: 4
 
-FAST    # Earnings: 2026-04-13 | Move: -8.3% | Close: $45.09
-ASML    # Earnings: 2026-04-15 | Move: -6.3% | Close: $1422.08
-WFC    # Earnings: 2026-04-14 | Move: -6.2% | Close: $81.31
+SCHW    # Earnings: 2026-04-16 | Move: -7.1% | Close: $93.18
+ABT    # Earnings: 2026-04-16 | Move: -6.0% | Close: $95.47
+WFC    # Earnings: 2026-04-14 | Move: -5.5% | Close: $81.84
+JBHT    # Earnings: 2026-04-15 | Move: +5.3% | Close: $241.77

@@ -1,19 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-16 13:55:04
+# Generated: 2026-04-17 13:27:59
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-16
-# Tickers: 32
+# Window: next 3 business days from 2026-04-17
+# Tickers: 51
 
-TRV    # Earnings: 2026-04-16
-ABT    # Earnings: 2026-04-16
-BK    # Earnings: 2026-04-16
-CFG    # Earnings: 2026-04-16
-KEY    # Earnings: 2026-04-16
-PEP    # Earnings: 2026-04-16
-PLD    # Earnings: 2026-04-16
-SCHW    # Earnings: 2026-04-16
-USB    # Earnings: 2026-04-16
 FITB    # Earnings: 2026-04-17
 RF    # Earnings: 2026-04-17
 STT    # Earnings: 2026-04-17
@@ -37,3 +28,31 @@ SYF    # Earnings: 2026-04-21
 TSCO    # Earnings: 2026-04-21
 UAL    # Earnings: 2026-04-21
 WRB    # Earnings: 2026-04-21
+BA    # Earnings: 2026-04-22
+IBM    # Earnings: 2026-04-22
+BSX    # Earnings: 2026-04-22
+CCI    # Earnings: 2026-04-22
+CME    # Earnings: 2026-04-22
+CSX    # Earnings: 2026-04-22
+ELV    # Earnings: 2026-04-22
+GEV    # Earnings: 2026-04-22
+GL    # Earnings: 2026-04-22
+KMI    # Earnings: 2026-04-22
+LRCX    # Earnings: 2026-04-22
+LUV    # Earnings: 2026-04-22
+LVS    # Earnings: 2026-04-22
+MAS    # Earnings: 2026-04-22
+MCO    # Earnings: 2026-04-22
+MOH    # Earnings: 2026-04-22
+NVR    # Earnings: 2026-04-22
+OTIS    # Earnings: 2026-04-22
+PKG    # Earnings: 2026-04-22
+PM    # Earnings: 2026-04-22
+RJF    # Earnings: 2026-04-22
+ROL    # Earnings: 2026-04-22
+T    # Earnings: 2026-04-22
+TDY    # Earnings: 2026-04-22
+TEL    # Earnings: 2026-04-22
+TSLA    # Earnings: 2026-04-22
+URI    # Earnings: 2026-04-22
+WAB    # Earnings: 2026-04-22
