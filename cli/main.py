@@ -1914,6 +1914,12 @@ def paper_trade(
             console.print(f"  [yellow]Not initialised — run init-paper-trading first. Skipping.[/yellow]")
             continue
 
+        # Benchmark agents skip the LLM pipeline entirely
+        if agent_cfg.get("type") == "benchmark":
+            from cli.benchmarks import run_benchmark
+            run_benchmark(agent_cfg, tickers, all_prices, trade_date, console, dry_run=dry_run)
+            continue
+
         graph_config = agent_to_graph_config(agent_cfg)
         analyst_keys = get_analyst_keys(agent_cfg)
 
