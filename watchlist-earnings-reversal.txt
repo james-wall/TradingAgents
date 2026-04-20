@@ -1,9 +1,9 @@
 # Earnings Reversal Watchlist
 # Strategy: earnings-reversal
-# Generated: 2026-04-17 13:38:02
+# Generated: 2026-04-20 13:56:52
 # Tickers: 4
 
-SCHW    # Earnings: 2026-04-16 | Move: -7.1% | Close: $93.18
-ABT    # Earnings: 2026-04-16 | Move: -6.0% | Close: $95.47
-WFC    # Earnings: 2026-04-14 | Move: -5.5% | Close: $81.84
-JBHT    # Earnings: 2026-04-15 | Move: +5.3% | Close: $241.77
+SCHW    # Earnings: 2026-04-16 | Move: -7.3% | Close: $92.96
+JBHT    # Earnings: 2026-04-15 | Move: +5.8% | Close: $242.88
+ABT    # Earnings: 2026-04-16 | Move: -5.0% | Close: $96.45
+STT    # Earnings: 2026-04-17 | Move: +5.0% | Close: $149.04
