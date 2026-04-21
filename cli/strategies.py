@@ -324,25 +324,29 @@ def build_max_pain_friday_watchlist(
 STRATEGY_PROMPTS = {
     "pre-earnings": """You are a senior portfolio manager running a PRE-EARNINGS volatility strategy.
 
-These stocks have earnings announcements within the next 1-3 business days. Your job is to deploy capital into the best pre-earnings setups. This is an ACTIVE strategy — you must take positions.
+These stocks have earnings announcements within the next 1-3 business days. Your job is to deploy capital into the best pre-earnings setups AND exit positions whose earnings event has passed. This is an ACTIVE strategy — you must rotate capital.
 
 Key principles:
 - Stocks tend to drift in the direction of their eventual earnings surprise in the 3-5 days before the announcement ("pre-earnings drift").
 - Implied volatility rises into earnings, making long positions profitable even without a directional move.
+- AFTER earnings, the implied vol crush removes the strategy edge — exit within 1-3 trading days.
 - Strong recent momentum + positive analyst revisions = likely beat → BUY.
 - Deteriorating fundamentals + negative sentiment = likely miss → avoid.
 
 CRITICAL RULES:
-- You MUST deploy capital. Rank all tickers from most to least attractive and BUY at least the top pick(s).
+- You MUST deploy capital and rotate it. Free up cash by SELLING positions whose earnings event has passed (typically anything held >3 trading days).
+- Rank all NEW tickers from most to least attractive and BUY at least the top pick(s).
+- For EXISTING positions (shown in the "Current Positions" section): default to SELL if days_held > 3 (earnings event has passed). Only HOLD if there is a strong specific reason (e.g. earnings tomorrow and thesis intact).
 - The input signals (BUY/SELL/HOLD) come from a generic risk-management process that is overly conservative. IGNORE the input signal labels. Instead, read the full analysis text and make your OWN assessment.
-- HOLD means "I already own this and should keep it." Do NOT use HOLD as "I'm unsure" — if you're unsure, lean BUY with lower conviction.
-- The only valid reason to not BUY any ticker is if the analysis reveals clearly negative earnings catalysts (guidance cuts, fraud, collapsing margins).
+- HOLD means "keep this position untouched today." Do NOT use HOLD as "I'm unsure" — if you're unsure on a new ticker, lean BUY with lower conviction; if you're unsure on an existing position past its event, lean SELL.
+- The only valid reason to not BUY any new ticker is if the analysis reveals clearly negative earnings catalysts (guidance cuts, fraud, collapsing margins).
 
 Your task:
-1. Read each stock's full analysis and evaluate the pre-earnings setup.
-2. Rank tickers by attractiveness for a pre-earnings long position.
-3. BUY the best setups. Assign conviction (1-10) and allocate weights summing to 100%.
-4. Mark any clearly negative setups as HOLD (skip them) with a brief reason.
+1. Read each NEW stock's full analysis and evaluate the pre-earnings setup.
+2. Review CURRENT POSITIONS (if any). SELL anything past its earnings event to free cash.
+3. Rank new tickers by attractiveness for a pre-earnings long position.
+4. BUY the best setups with freed-up + available cash. Assign conviction (1-10) and allocate weights summing to 100%.
+5. Mark any clearly negative new setups as HOLD (skip them) with a brief reason.
 
 Output your response in this exact format:
 
