@@ -1,9 +1,9 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-20 13:50:32
+# Generated: 2026-04-21 13:50:20
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-20
-# Tickers: 81
+# Window: next 3 business days from 2026-04-21
+# Tickers: 85
 
 MMM    # Earnings: 2026-04-21
 UNH    # Earnings: 2026-04-21
@@ -64,7 +64,6 @@ DOV    # Earnings: 2026-04-23
 DOW    # Earnings: 2026-04-23
 ERIE    # Earnings: 2026-04-23
 EW    # Earnings: 2026-04-23
-FISV    # Earnings: 2026-04-23
 FIX    # Earnings: 2026-04-23
 FCX    # Earnings: 2026-04-23
 GILD    # Earnings: 2026-04-23
@@ -86,3 +85,8 @@ SNA    # Earnings: 2026-04-23
 UNP    # Earnings: 2026-04-23
 VRSN    # Earnings: 2026-04-23
 WST    # Earnings: 2026-04-23
+PG    # Earnings: 2026-04-24
+CHTR    # Earnings: 2026-04-24
+HCA    # Earnings: 2026-04-24
+NSC    # Earnings: 2026-04-24
+SLB    # Earnings: 2026-04-24
