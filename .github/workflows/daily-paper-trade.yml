@@ -18,7 +18,7 @@ on:
       max_days:
         description: 'Stop automatically after this many paper trading days'
         required: false
-        default: '20'
+        default: '90'
       agents:
         description: 'Comma-separated agent names to run (default: all)'
         required: false
@@ -120,7 +120,7 @@ jobs:
       - name: Check max days cap
         id: cap
         run: |
-          MAX_DAYS="${{ github.event.inputs.max_days || '20' }}"
+          MAX_DAYS="${{ github.event.inputs.max_days || '90' }}"
           python3 - <<EOF >> $GITHUB_OUTPUT
           import sqlite3, pathlib
           db = pathlib.Path("paper_trading.db")
@@ -141,7 +141,7 @@ jobs:
       - name: Skip — max days reached
         if: steps.cap.outputs.reached_cap == 'true'
         run: |
-          echo "🏁 Max days (${{ github.event.inputs.max_days || '20' }}) reached after ${{ steps.cap.outputs.days_completed }} trading days." >> $GITHUB_STEP_SUMMARY
+          echo "🏁 Max days (${{ github.event.inputs.max_days || '90' }}) reached after ${{ steps.cap.outputs.days_completed }} trading days." >> $GITHUB_STEP_SUMMARY
           exit 1
 
       # ── Init DB ────────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ jobs:
         run: |
           DATE="${{ needs.check-market.outputs.trade_date }}"
           AGENTS="${{ github.event.inputs.agents }}"
-          DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist"
+          DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist,benchmark-spy-hold,benchmark-watchlist-basket"
           AGENTS="${AGENTS:-$DEFAULT_AGENTS}"
 
           if [ -f watchlist-pre-earnings.txt ]; then
@@ -212,7 +212,7 @@ jobs:
         run: |
           DATE="${{ needs.check-market.outputs.trade_date }}"
           AGENTS="${{ github.event.inputs.agents }}"
-          DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist"
+          DEFAULT_AGENTS="hybrid-flash-sonnet,hybrid-flash-sonnet-earnings,hybrid-flash-deepseek,hybrid-flash-deepseek-earnings,claude-earnings-specialist,gemini-earnings-specialist,benchmark-spy-hold,benchmark-watchlist-basket"
           AGENTS="${AGENTS:-$DEFAULT_AGENTS}"
 
           if [ -f watchlist-earnings-reversal.txt ]; then

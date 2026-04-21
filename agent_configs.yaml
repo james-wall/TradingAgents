@@ -243,3 +243,21 @@ agents:
       - news
     research_depth: 1
     starting_balance: 100000
+
+  # ═══════════════════════════════════════════════════════════════
+  # BENCHMARK AGENTS (no LLM — for measuring agent alpha)
+  # ═══════════════════════════════════════════════════════════════
+
+  # Buy SPY day 1 with full balance, hold forever.
+  # The "did this strategy beat the market?" baseline.
+  - name: "benchmark-spy-hold"
+    type: benchmark
+    benchmark_strategy: spy-buy-hold
+    starting_balance: 100000
+
+  # Each day, deploy remaining cash equally across the day's watchlist tickers.
+  # The "is the LLM actually picking better than blind diversification?" baseline.
+  - name: "benchmark-watchlist-basket"
+    type: benchmark
+    benchmark_strategy: watchlist-equal-weight
+    starting_balance: 100000

@@ -46,6 +46,7 @@ def aggregate_portfolio_recommendations(
     ticker_results: List[Dict[str, Any]],
     analysis_date: str,
     strategy: Optional[str] = None,
+    current_positions: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     """
     Synthesize individual ticker analyses into a weighted portfolio recommendation.
@@ -58,6 +59,9 @@ def aggregate_portfolio_recommendations(
             - final_trade_decision (str): full decision text from the risk judge
         analysis_date: Date string (YYYY-MM-DD) for the analysis.
         strategy: Optional strategy name for strategy-specific prompting.
+        current_positions: Optional list of position dicts for the agent. Each
+            dict has: ticker, shares, avg_cost, current_price, unrealized_pnl_pct,
+            days_held. Passed to the LLM so it can decide to SELL existing holdings.
 
     Returns:
         Markdown-formatted portfolio action plan string.
@@ -73,10 +77,30 @@ def aggregate_portfolio_recommendations(
 
     combined = "\n\n---\n\n".join(summaries)
 
+    # Build a positions table the LLM can reason about for SELL decisions.
+    positions_section = ""
+    if current_positions:
+        rows = ["| Ticker | Shares | Avg Cost | Current | P&L % | Days Held |",
+                "|--------|-------:|---------:|--------:|------:|----------:|"]
+        for p in current_positions:
+            rows.append(
+                f"| {p['ticker']} | {p['shares']:.0f} | ${p['avg_cost']:.2f} | "
+                f"${p['current_price']:.2f} | {p['unrealized_pnl_pct']:+.2f}% | "
+                f"{p['days_held'] if p['days_held'] is not None else '?'} |"
+            )
+        positions_section = (
+            "\n\n### Current Positions\n"
+            "These positions are already in the portfolio. For each, decide BUY (add), "
+            "SELL (exit / trim), or HOLD (keep as-is). Pre-earnings positions held "
+            ">3 trading days have typically passed their event — consider SELL.\n\n"
+            + "\n".join(rows)
+        )
+
     user_prompt = (
         f"Synthesize the following {len(ticker_results)} stock analyses into a cohesive "
         f"daily portfolio action plan for {analysis_date}.\n\n"
         f"{combined}"
+        f"{positions_section}"
     )
 
     # Use strategy-specific prompt if available, otherwise default

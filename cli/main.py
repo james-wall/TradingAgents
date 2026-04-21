@@ -1737,7 +1737,7 @@ def _get_next_earnings_date(ticker_obj):
 # Shared helper: run portfolio analysis programmatically (no interactive UI)
 # ---------------------------------------------------------------------------
 
-def run_portfolio_analysis_for_agent(tickers, graph_config, analyst_keys, analysis_date, strategy=None):
+def run_portfolio_analysis_for_agent(tickers, graph_config, analyst_keys, analysis_date, strategy=None, current_positions=None):
     """
     Core portfolio analysis loop — usable by both interactive CLI and paper trading.
     Returns (ticker_results, portfolio_plan_text, quick_thinking_llm).
@@ -1766,7 +1766,8 @@ def run_portfolio_analysis_for_agent(tickers, graph_config, analyst_keys, analys
     portfolio_plan = None
     if valid:
         portfolio_plan = aggregate_portfolio_recommendations(
-            graph.quick_thinking_llm, valid, analysis_date, strategy=strategy
+            graph.quick_thinking_llm, valid, analysis_date,
+            strategy=strategy, current_positions=current_positions,
         )
 
     return ticker_results, portfolio_plan, graph.quick_thinking_llm
@@ -1914,13 +1915,26 @@ def paper_trade(
             console.print(f"  [yellow]Not initialised — run init-paper-trading first. Skipping.[/yellow]")
             continue
 
+        # Benchmark agents skip the LLM pipeline entirely
+        if agent_cfg.get("type") == "benchmark":
+            from cli.benchmarks import run_benchmark
+            run_benchmark(agent_cfg, tickers, all_prices, trade_date, console, dry_run=dry_run)
+            continue
+
         graph_config = agent_to_graph_config(agent_cfg)
         analyst_keys = get_analyst_keys(agent_cfg)
+
+        # Build position context so the LLM can decide to SELL existing holdings
+        from cli.positions import build_position_context
+        position_context = build_position_context(name, all_prices, trade_date)
+        if position_context:
+            console.print(f"  [dim]Existing positions: {len(position_context)} ({', '.join(p['ticker'] for p in position_context)})[/dim]")
 
         # Run analysis
         with console.status(f"[green]Running analysis for {name}...[/green]", spinner="dots"):
             ticker_results, portfolio_plan, llm = run_portfolio_analysis_for_agent(
-                tickers, graph_config, analyst_keys, trade_date, strategy=strategy
+                tickers, graph_config, analyst_keys, trade_date,
+                strategy=strategy, current_positions=position_context,
             )
 
         # Log per-ticker results so failures are visible
@@ -1950,6 +1964,11 @@ def paper_trade(
         if not dry_run:
             account = Account(name)
             trade_results = execute_paper_trades(account, actions, trade_date, prices)
+
+            # Auto-sell backstop: force-exit stale positions the LLM forgot to rotate.
+            # Pre-earnings strategy edge dies after the event — don't let cash get locked.
+            from cli.positions import force_sell_stale_positions
+            force_sell_stale_positions(account, all_prices, trade_date, console, max_days_held=10)
 
             # Mark-to-market snapshot (use all_prices for existing positions)
             account.take_snapshot(trade_date, all_prices)
