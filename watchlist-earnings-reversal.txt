@@ -1,13 +1,19 @@
 # Earnings Reversal Watchlist
 # Strategy: earnings-reversal
-# Generated: 2026-04-21 13:57:10
-# Tickers: 8
+# Generated: 2026-04-22 13:57:37
+# Tickers: 14
 
-STT    # Earnings: 2026-04-17 | Move: +9.7% | Close: $155.65
-UNH    # Earnings: 2026-04-21 | Move: +9.4% | Close: $353.91
-TSCO    # Earnings: 2026-04-21 | Move: -8.6% | Close: $40.97
-DHI    # Earnings: 2026-04-21 | Move: +7.9% | Close: $165.48
-SCHW    # Earnings: 2026-04-16 | Move: -6.4% | Close: $93.82
-ABT    # Earnings: 2026-04-16 | Move: -6.3% | Close: $95.17
-MSCI    # Earnings: 2026-04-21 | Move: +6.3% | Close: $602.49
-BK    # Earnings: 2026-04-16 | Move: +5.0% | Close: $138.60
+GEV    # Earnings: 2026-04-22 | Move: +13.9% | Close: $1128.68
+TSCO    # Earnings: 2026-04-21 | Move: -11.7% | Close: $39.56
+MAS    # Earnings: 2026-04-22 | Move: +10.7% | Close: $73.88
+TEL    # Earnings: 2026-04-22 | Move: -10.4% | Close: $217.83
+UNH    # Earnings: 2026-04-21 | Move: +9.6% | Close: $354.57
+MSCI    # Earnings: 2026-04-21 | Move: +8.5% | Close: $614.86
+STT    # Earnings: 2026-04-17 | Move: +8.5% | Close: $154.01
+BSX    # Earnings: 2026-04-22 | Move: +8.3% | Close: $64.46
+NTRS    # Earnings: 2026-04-21 | Move: +7.8% | Close: $171.47
+HAL    # Earnings: 2026-04-21 | Move: +7.0% | Close: $39.24
+RTX    # Earnings: 2026-04-21 | Move: -6.5% | Close: $183.04
+NVR    # Earnings: 2026-04-22 | Move: -6.2% | Close: $6501.15
+PM    # Earnings: 2026-04-22 | Move: +5.4% | Close: $161.54
+UAL    # Earnings: 2026-04-21 | Move: -5.1% | Close: $93.88
