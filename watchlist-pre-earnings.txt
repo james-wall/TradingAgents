@@ -1,38 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-22 13:50:23
+# Generated: 2026-04-23 13:53:19
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-22
-# Tickers: 77
+# Window: next 3 business days from 2026-04-23
+# Tickers: 95
 
-BA    # Earnings: 2026-04-22
-IBM    # Earnings: 2026-04-22
-BSX    # Earnings: 2026-04-22
-CCI    # Earnings: 2026-04-22
-CME    # Earnings: 2026-04-22
-CSX    # Earnings: 2026-04-22
-ELV    # Earnings: 2026-04-22
-GEV    # Earnings: 2026-04-22
-GL    # Earnings: 2026-04-22
-KMI    # Earnings: 2026-04-22
-LRCX    # Earnings: 2026-04-22
-LUV    # Earnings: 2026-04-22
-LVS    # Earnings: 2026-04-22
-MAS    # Earnings: 2026-04-22
-MCO    # Earnings: 2026-04-22
-MOH    # Earnings: 2026-04-22
-NVR    # Earnings: 2026-04-22
-OTIS    # Earnings: 2026-04-22
-PKG    # Earnings: 2026-04-22
-PM    # Earnings: 2026-04-22
-RJF    # Earnings: 2026-04-22
-ROL    # Earnings: 2026-04-22
-T    # Earnings: 2026-04-22
-TDY    # Earnings: 2026-04-22
-TEL    # Earnings: 2026-04-22
-TSLA    # Earnings: 2026-04-22
-URI    # Earnings: 2026-04-22
-WAB    # Earnings: 2026-04-22
 AXP    # Earnings: 2026-04-23
 HON    # Earnings: 2026-04-23
 AMP    # Earnings: 2026-04-23
@@ -47,8 +19,6 @@ ERIE    # Earnings: 2026-04-23
 EW    # Earnings: 2026-04-23
 FIX    # Earnings: 2026-04-23
 FCX    # Earnings: 2026-04-23
-GILD    # Earnings: 2026-04-23
-HAS    # Earnings: 2026-04-23
 HIG    # Earnings: 2026-04-23
 HBAN    # Earnings: 2026-04-23
 INTC    # Earnings: 2026-04-23
@@ -82,3 +52,51 @@ NUE    # Earnings: 2026-04-27
 PSA    # Earnings: 2026-04-27
 UHS    # Earnings: 2026-04-27
 VTR    # Earnings: 2026-04-27
+KO    # Earnings: 2026-04-28
+SHW    # Earnings: 2026-04-28
+V    # Earnings: 2026-04-28
+ALLE    # Earnings: 2026-04-28
+AMT    # Earnings: 2026-04-28
+AVY    # Earnings: 2026-04-28
+BEN    # Earnings: 2026-04-28
+BKNG    # Earnings: 2026-04-28
+BXP    # Earnings: 2026-04-28
+CMS    # Earnings: 2026-04-28
+CNC    # Earnings: 2026-04-28
+CSGP    # Earnings: 2026-04-28
+ECL    # Earnings: 2026-04-28
+EIX    # Earnings: 2026-04-28
+EQR    # Earnings: 2026-04-28
+ESS    # Earnings: 2026-04-28
+EXE    # Earnings: 2026-04-28
+EXR    # Earnings: 2026-04-28
+FE    # Earnings: 2026-04-28
+FFIV    # Earnings: 2026-04-28
+FICO    # Earnings: 2026-04-28
+GLW    # Earnings: 2026-04-28
+GM    # Earnings: 2026-04-28
+HLT    # Earnings: 2026-04-28
+HOOD    # Earnings: 2026-04-28
+IR    # Earnings: 2026-04-28
+INCY    # Earnings: 2026-04-28
+IVZ    # Earnings: 2026-04-28
+KMB    # Earnings: 2026-04-28
+MDLZ    # Earnings: 2026-04-28
+NXPI    # Earnings: 2026-04-28
+OKE    # Earnings: 2026-04-28
+OMC    # Earnings: 2026-04-28
+PCAR    # Earnings: 2026-04-28
+PNR    # Earnings: 2026-04-28
+PPG    # Earnings: 2026-04-28
+SBUX    # Earnings: 2026-04-28
+SPGI    # Earnings: 2026-04-28
+STX    # Earnings: 2026-04-28
+SYY    # Earnings: 2026-04-28
+TER    # Earnings: 2026-04-28
+TMUS    # Earnings: 2026-04-28
+UPS    # Earnings: 2026-04-28
+VLTO    # Earnings: 2026-04-28
+WELL    # Earnings: 2026-04-28
+WM    # Earnings: 2026-04-28
+XYL    # Earnings: 2026-04-28
+ZBH    # Earnings: 2026-04-28
