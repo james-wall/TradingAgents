@@ -78,11 +78,19 @@ def _run_watchlist_basket(account, tickers, all_prices, trade_date, console):
         console.print("  [yellow]No priced tickers in watchlist — skipping.[/yellow]")
         return
 
-    weight_per_ticker = 1.0 / len(valid_tickers)
+    # account.execute_buy() interprets buy_weight as a fraction of CURRENT cash.
+    # Naive 1/N would shrink each subsequent buy. Compute a fixed dollar target
+    # per ticker from starting cash, then convert to a per-iteration weight.
+    target_per_ticker = account.cash / len(valid_tickers)
+
     for ticker in valid_tickers:
         price = all_prices[ticker]
+        current_cash = account.cash
+        if current_cash < price:
+            break
+        buy_weight = min(1.0, target_per_ticker / current_cash)
         shares, err = account.execute_buy(
-            ticker, price, weight_per_ticker, trade_date,
+            ticker, price, buy_weight, trade_date,
             notes=f"benchmark: equal-weight basket ({len(valid_tickers)} tickers)",
         )
         if err:
