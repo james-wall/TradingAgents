@@ -1,29 +1,38 @@
 # Earnings Reversal Watchlist
 # Strategy: earnings-reversal
-# Generated: 2026-04-23 13:59:14
-# Tickers: 24
+# Generated: 2026-04-24 13:50:20
+# Tickers: 33
 
-GEV    # Earnings: 2026-04-22 | Move: +17.4% | Close: $1164.01
-WST    # Earnings: 2026-04-23 | Move: +14.2% | Close: $313.47
-TSCO    # Earnings: 2026-04-21 | Move: -13.5% | Close: $38.75
-MOH    # Earnings: 2026-04-22 | Move: +13.4% | Close: $171.17
-IBM    # Earnings: 2026-04-22 | Move: -12.5% | Close: $223.60
-MAS    # Earnings: 2026-04-22 | Move: +12.5% | Close: $75.12
-FCX    # Earnings: 2026-04-23 | Move: -12.3% | Close: $61.74
-EFX    # Earnings: 2026-04-21 | Move: -11.8% | Close: $175.01
-BSX    # Earnings: 2026-04-22 | Move: +10.5% | Close: $65.79
-UNH    # Earnings: 2026-04-21 | Move: +9.1% | Close: $352.93
-DHR    # Earnings: 2026-04-21 | Move: -9.0% | Close: $178.00
-HAL    # Earnings: 2026-04-21 | Move: +8.7% | Close: $39.88
-LVS    # Earnings: 2026-04-22 | Move: -8.6% | Close: $52.58
-PM    # Earnings: 2026-04-22 | Move: +8.3% | Close: $165.93
-RTX    # Earnings: 2026-04-21 | Move: -7.5% | Close: $181.16
-BA    # Earnings: 2026-04-22 | Move: +6.8% | Close: $234.09
-KDP    # Earnings: 2026-04-23 | Move: +6.7% | Close: $28.31
-LUV    # Earnings: 2026-04-22 | Move: -6.5% | Close: $38.26
-UAL    # Earnings: 2026-04-21 | Move: -6.0% | Close: $92.94
-DOV    # Earnings: 2026-04-23 | Move: +5.7% | Close: $228.52
-NTRS    # Earnings: 2026-04-21 | Move: +5.4% | Close: $167.55
-MSCI    # Earnings: 2026-04-21 | Move: +5.3% | Close: $596.77
-NVR    # Earnings: 2026-04-22 | Move: -5.2% | Close: $6575.07
-IBKR    # Earnings: 2026-04-21 | Move: -5.1% | Close: $77.14
+INTC    # Earnings: 2026-04-23 | Move: +26.2% | Close: $82.37
+TSCO    # Earnings: 2026-04-21 | Move: -15.7% | Close: $37.76
+GEV    # Earnings: 2026-04-22 | Move: +15.2% | Close: $1142.00
+FCX    # Earnings: 2026-04-23 | Move: -14.6% | Close: $60.08
+CHTR    # Earnings: 2026-04-24 | Move: -13.7% | Close: $208.77
+MOH    # Earnings: 2026-04-22 | Move: +13.5% | Close: $171.43
+MAS    # Earnings: 2026-04-22 | Move: +12.1% | Close: $74.84
+EFX    # Earnings: 2026-04-21 | Move: -11.6% | Close: $175.35
+IBM    # Earnings: 2026-04-22 | Move: -11.2% | Close: $227.02
+RTX    # Earnings: 2026-04-21 | Move: -11.1% | Close: $174.13
+TEL    # Earnings: 2026-04-22 | Move: -10.4% | Close: $217.87
+HCA    # Earnings: 2026-04-24 | Move: -9.5% | Close: $428.88
+DHR    # Earnings: 2026-04-21 | Move: -9.4% | Close: $177.15
+LVS    # Earnings: 2026-04-22 | Move: -9.2% | Close: $52.25
+UNH    # Earnings: 2026-04-21 | Move: +9.1% | Close: $352.86
+PM    # Earnings: 2026-04-22 | Move: +9.0% | Close: $167.03
+BKR    # Earnings: 2026-04-23 | Move: +8.8% | Close: $68.04
+BSX    # Earnings: 2026-04-22 | Move: +7.9% | Close: $64.25
+KDP    # Earnings: 2026-04-23 | Move: +7.8% | Close: $28.62
+LMT    # Earnings: 2026-04-23 | Move: -7.5% | Close: $513.97
+UAL    # Earnings: 2026-04-21 | Move: -7.2% | Close: $91.80
+HAL    # Earnings: 2026-04-21 | Move: +7.1% | Close: $39.30
+BA    # Earnings: 2026-04-22 | Move: +7.0% | Close: $234.58
+NEE    # Earnings: 2026-04-23 | Move: +6.7% | Close: $96.03
+IBKR    # Earnings: 2026-04-21 | Move: -6.5% | Close: $75.96
+DHI    # Earnings: 2026-04-21 | Move: +6.1% | Close: $162.70
+COF    # Earnings: 2026-04-21 | Move: -5.8% | Close: $193.86
+BX    # Earnings: 2026-04-23 | Move: -5.7% | Close: $122.38
+DOV    # Earnings: 2026-04-23 | Move: +5.6% | Close: $228.22
+FIX    # Earnings: 2026-04-23 | Move: +5.5% | Close: $1819.98
+CSX    # Earnings: 2026-04-22 | Move: +5.3% | Close: $45.67
+AXP    # Earnings: 2026-04-23 | Move: -5.2% | Close: $315.56
+ELV    # Earnings: 2026-04-22 | Move: +5.0% | Close: $344.63

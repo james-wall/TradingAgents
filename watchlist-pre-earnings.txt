@@ -1,41 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-23 13:53:19
+# Generated: 2026-04-24 13:43:58
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-23
-# Tickers: 95
+# Window: next 3 business days from 2026-04-24
+# Tickers: 110
 
-AXP    # Earnings: 2026-04-23
-HON    # Earnings: 2026-04-23
-AMP    # Earnings: 2026-04-23
-BKR    # Earnings: 2026-04-23
-BX    # Earnings: 2026-04-23
-CBRE    # Earnings: 2026-04-23
-CNP    # Earnings: 2026-04-23
-DLR    # Earnings: 2026-04-23
-DOV    # Earnings: 2026-04-23
-DOW    # Earnings: 2026-04-23
-ERIE    # Earnings: 2026-04-23
-EW    # Earnings: 2026-04-23
-FIX    # Earnings: 2026-04-23
-FCX    # Earnings: 2026-04-23
-HIG    # Earnings: 2026-04-23
-HBAN    # Earnings: 2026-04-23
-INTC    # Earnings: 2026-04-23
-KDP    # Earnings: 2026-04-23
-LMT    # Earnings: 2026-04-23
-NDAQ    # Earnings: 2026-04-23
-NEE    # Earnings: 2026-04-23
-NEM    # Earnings: 2026-04-23
-PCG    # Earnings: 2026-04-23
-PFG    # Earnings: 2026-04-23
-PHM    # Earnings: 2026-04-23
-POOL    # Earnings: 2026-04-23
-ROP    # Earnings: 2026-04-23
-SNA    # Earnings: 2026-04-23
-UNP    # Earnings: 2026-04-23
-VRSN    # Earnings: 2026-04-23
-WST    # Earnings: 2026-04-23
 PG    # Earnings: 2026-04-24
 CHTR    # Earnings: 2026-04-24
 HCA    # Earnings: 2026-04-24
@@ -100,3 +69,49 @@ WELL    # Earnings: 2026-04-28
 WM    # Earnings: 2026-04-28
 XYL    # Earnings: 2026-04-28
 ZBH    # Earnings: 2026-04-28
+AMZN    # Earnings: 2026-04-29
+MSFT    # Earnings: 2026-04-29
+ABBV    # Earnings: 2026-04-29
+ADP    # Earnings: 2026-04-29
+ALGN    # Earnings: 2026-04-29
+ALL    # Earnings: 2026-04-29
+APH    # Earnings: 2026-04-29
+AWK    # Earnings: 2026-04-29
+BG    # Earnings: 2026-04-29
+BIIB    # Earnings: 2026-04-29
+CMG    # Earnings: 2026-04-29
+CTSH    # Earnings: 2026-04-29
+CVNA    # Earnings: 2026-04-29
+EBAY    # Earnings: 2026-04-29
+EG    # Earnings: 2026-04-29
+EME    # Earnings: 2026-04-29
+EQIX    # Earnings: 2026-04-29
+ETR    # Earnings: 2026-04-29
+F    # Earnings: 2026-04-29
+GD    # Earnings: 2026-04-29
+GEHC    # Earnings: 2026-04-29
+GNRC    # Earnings: 2026-04-29
+GOOGL    # Earnings: 2026-04-29
+GOOG    # Earnings: 2026-04-29
+GRMN    # Earnings: 2026-04-29
+HUM    # Earnings: 2026-04-29
+IEX    # Earnings: 2026-04-29
+INVH    # Earnings: 2026-04-29
+LII    # Earnings: 2026-04-29
+MAA    # Earnings: 2026-04-29
+META    # Earnings: 2026-04-29
+MGM    # Earnings: 2026-04-29
+ODFL    # Earnings: 2026-04-29
+ORLY    # Earnings: 2026-04-29
+PSX    # Earnings: 2026-04-29
+QCOM    # Earnings: 2026-04-29
+REGN    # Earnings: 2026-04-29
+REG    # Earnings: 2026-04-29
+SBAC    # Earnings: 2026-04-29
+SWK    # Earnings: 2026-04-29
+TYL    # Earnings: 2026-04-29
+UDR    # Earnings: 2026-04-29
+VICI    # Earnings: 2026-04-29
+VMC    # Earnings: 2026-04-29
+VRSK    # Earnings: 2026-04-29
+YUM    # Earnings: 2026-04-29
