@@ -52,6 +52,27 @@
 
 </div>
 
+## Paper Trading Experiment — Next Steps
+
+Items identified during the current paper-trading run that haven't been addressed yet. Ordered by expected impact before promoting any agent to real money.
+
+### Before going live
+- [ ] **Investigate "all-HOLD" agents** — `gemini-earnings-specialist` and `hybrid-flash-deepseek` have run multiple days with full cash and produced zero trades despite the "MUST deploy capital" prompt. Either the models are over-conservative or there's a plan-parsing issue.
+- [ ] **Verify sell mechanics fire in practice** — the position-aware aggregator (LLM-driven SELLs) and the 10-day auto-sell backstop both need to be observed working end-to-end once positions age enough. Track SELL counts per agent.
+- [ ] **Add transaction cost modeling** — commission + slippage (~0.1% per trade) so paper performance maps closer to real trading.
+- [ ] **Report richer leaderboard metrics** — Sharpe ratio, max drawdown, win rate, avg-win / avg-loss. Cumulative return alone hides risk.
+
+### Throughput / data collection
+- [ ] Only 3–5 of 8 agents complete within the 2-hour CI window. Consider splitting agents into parallel GitHub Actions jobs to get a full daily read.
+- [ ] Need ≥30 closed trades per agent before any meaningful comparison. Estimated ~3 months at current pace.
+
+### Evaluation
+- [ ] Apply the live-promotion bar: beat SPY by ≥5pp absolute AND beat the watchlist-basket benchmark by ≥3pp AND Sharpe ≥ 1.0 AND max drawdown ≤ 15%.
+- [ ] Consider out-of-sample validation — pick a winner on the first half of the window, verify on the second half before promoting.
+
+### Going live
+- [ ] Pilot the winning agent with a small real position (~$500–1000) before scaling. Paper trading doesn't capture execution latency, fills at open vs close, or psychology.
+
 ## TradingAgents Framework
 
 TradingAgents is a multi-agent trading framework that mirrors the dynamics of real-world trading firms. By deploying specialized LLM-powered agents: from fundamental analysts, sentiment experts, and technical analysts, to trader, risk management team, the platform collaboratively evaluates market conditions and informs trading decisions. Moreover, these agents engage in dynamic discussions to pinpoint the optimal strategy.
