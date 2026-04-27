@@ -2342,6 +2342,7 @@ version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "backtrader" },
+    { name = "beautifulsoup4" },
     { name = "langchain-anthropic" },
     { name = "langchain-core" },
     { name = "langchain-experimental" },
@@ -2368,6 +2369,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "backtrader", specifier = ">=1.9.78.123" },
+    { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "langchain-anthropic", specifier = ">=0.3.15" },
     { name = "langchain-core", specifier = ">=0.3.81" },
     { name = "langchain-experimental", specifier = ">=0.3.4" },

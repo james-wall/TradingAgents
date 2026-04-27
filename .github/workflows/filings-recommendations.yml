@@ -1,0 +1,114 @@
+name: Daily Filings Recommendations
+
+on:
+  schedule:
+    # 7:00 AM ET (11:00 UTC) Mon–Fri — runs after most overnight EDGAR posts
+    # but before the daily-paper-trade workflow at 8 AM ET, so they don't fight
+    # for git state.
+    - cron: '0 11 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Report date YYYY-MM-DD (default: today)'
+        required: false
+        default: ''
+      days_back:
+        description: 'Only analyze filings from the last N days'
+        required: false
+        default: '3'
+      agent:
+        description: 'Agent name (sources the LLM from agent_configs.yaml)'
+        required: false
+        default: 'hybrid-flash-sonnet-earnings'
+      tickers_file:
+        description: 'Tickers file to scan'
+        required: false
+        default: 'tickers.txt'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+# Don't allow this and the earnings paper-trade workflow to push at the same time.
+concurrency:
+  group: filings-recommendations
+  cancel-in-progress: false
+
+jobs:
+  recommend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Configure secrets
+        run: |
+          echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
+          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env
+          # SEC EDGAR requires a User-Agent identifying the requester.
+          # Set the EDGAR_USER_AGENT secret to "<Name> <email>" per SEC policy.
+          echo "EDGAR_USER_AGENT=${{ secrets.EDGAR_USER_AGENT }}" >> .env
+
+      - name: Set report date
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            echo "report_date=${{ github.event.inputs.date }}" >> $GITHUB_OUTPUT
+          else
+            echo "report_date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run filings batch
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+        run: |
+          DATE="${{ steps.date.outputs.report_date }}"
+          DAYS="${{ github.event.inputs.days_back || '3' }}"
+          AGENT="${{ github.event.inputs.agent || 'hybrid-flash-sonnet-earnings' }}"
+          TICKERS="${{ github.event.inputs.tickers_file || 'tickers.txt' }}"
+
+          mkdir -p recommendations/filings
+          tradingagents filings-batch \
+            --tickers "$TICKERS" \
+            --output "recommendations/filings/${DATE}.md" \
+            --days-back "$DAYS" \
+            --agent "$AGENT" || true
+
+      - name: Job summary
+        if: always()
+        run: |
+          DATE="${{ steps.date.outputs.report_date }}"
+          REPORT="recommendations/filings/${DATE}.md"
+          if [ -f "$REPORT" ]; then
+            echo "# Filings Recommendations — ${DATE}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            head -200 "$REPORT" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No report generated for ${DATE}." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Commit recommendations
+        if: always()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add recommendations/ 2>/dev/null || true
+          git diff --staged --quiet && exit 0
+          git commit -m "chore: filings recommendations ${{ steps.date.outputs.report_date }} [skip ci]"
+          git pull --rebase
+          git push
