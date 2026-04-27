@@ -1870,10 +1870,13 @@ def paper_trade(
             console.print("[red]No matching agents found. Exiting.[/red]")
             raise typer.Exit(1)
 
-    # Shuffle agent order using trade date as seed so each day gets a
-    # different order but the same day is reproducible.  This prevents
-    # the same agents from being starved by CI timeout every run.
-    random.Random(trade_date).shuffle(agent_cfgs)
+    # Benchmarks are cheap (no LLM) and must snapshot every day to keep the
+    # leaderboard mark-to-market. Run them unconditionally first; only LLM
+    # agents get shuffled into the timeout-bound queue.
+    benchmark_cfgs = [c for c in agent_cfgs if c.get("type") == "benchmark"]
+    llm_cfgs = [c for c in agent_cfgs if c.get("type") != "benchmark"]
+    random.Random(trade_date).shuffle(llm_cfgs)
+    agent_cfgs = benchmark_cfgs + llm_cfgs
 
     init_db()
 
