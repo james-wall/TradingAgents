@@ -2161,9 +2161,10 @@ def agent_history(
         console.print("[dim]No trades recorded yet.[/dim]")
 
 
-from cli.filings import filings_recommend, filings_batch
+from cli.filings import filings_recommend, filings_batch, filings_score
 app.command(name="filings-recommend")(filings_recommend)
 app.command(name="filings-batch")(filings_batch)
+app.command(name="filings-score")(filings_score)
 
 
 if __name__ == "__main__":
