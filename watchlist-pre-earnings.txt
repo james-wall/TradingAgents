@@ -1,15 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-24 13:43:58
+# Generated: 2026-04-27 14:03:17
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-24
-# Tickers: 110
+# Window: next 3 business days from 2026-04-27
+# Tickers: 163
 
-PG    # Earnings: 2026-04-24
-CHTR    # Earnings: 2026-04-24
-HCA    # Earnings: 2026-04-24
-NSC    # Earnings: 2026-04-24
-SLB    # Earnings: 2026-04-24
 VZ    # Earnings: 2026-04-27
 ARE    # Earnings: 2026-04-27
 AVB    # Earnings: 2026-04-27
@@ -115,3 +110,61 @@ VICI    # Earnings: 2026-04-29
 VMC    # Earnings: 2026-04-29
 VRSK    # Earnings: 2026-04-29
 YUM    # Earnings: 2026-04-29
+AAPL    # Earnings: 2026-04-30
+AMGN    # Earnings: 2026-04-30
+CAT    # Earnings: 2026-04-30
+MRK    # Earnings: 2026-04-30
+AES    # Earnings: 2026-04-30
+AIG    # Earnings: 2026-04-30
+AJG    # Earnings: 2026-04-30
+AME    # Earnings: 2026-04-30
+APD    # Earnings: 2026-04-30
+BAX    # Earnings: 2026-04-30
+BLDR    # Earnings: 2026-04-30
+BMY    # Earnings: 2026-04-30
+BR    # Earnings: 2026-04-30
+CAH    # Earnings: 2026-04-30
+CARR    # Earnings: 2026-04-30
+CI    # Earnings: 2026-04-30
+CLX    # Earnings: 2026-04-30
+COP    # Earnings: 2026-04-30
+CPT    # Earnings: 2026-04-30
+CRH    # Earnings: 2026-04-30
+DTE    # Earnings: 2026-04-30
+DXCM    # Earnings: 2026-04-30
+FSLR    # Earnings: 2026-04-30
+FTV    # Earnings: 2026-04-30
+GDDY    # Earnings: 2026-04-30
+HOLX    # Earnings: 2026-04-30
+HSY    # Earnings: 2026-04-30
+HUBB    # Earnings: 2026-04-30
+ICE    # Earnings: 2026-04-30
+IRM    # Earnings: 2026-04-30
+ITW    # Earnings: 2026-04-30
+IP    # Earnings: 2026-04-30
+KIM    # Earnings: 2026-04-30
+LH    # Earnings: 2026-04-30
+LHX    # Earnings: 2026-04-30
+LLY    # Earnings: 2026-04-30
+LNT    # Earnings: 2026-04-30
+MA    # Earnings: 2026-04-30
+MLM    # Earnings: 2026-04-30
+MO    # Earnings: 2026-04-30
+MPWR    # Earnings: 2026-04-30
+PH    # Earnings: 2026-04-30
+RCL    # Earnings: 2026-04-30
+RMD    # Earnings: 2026-04-30
+SO    # Earnings: 2026-04-30
+SW    # Earnings: 2026-04-30
+SYK    # Earnings: 2026-04-30
+TAP    # Earnings: 2026-04-30
+TROW    # Earnings: 2026-04-30
+TT    # Earnings: 2026-04-30
+TXT    # Earnings: 2026-04-30
+VLO    # Earnings: 2026-04-30
+WDC    # Earnings: 2026-04-30
+WTW    # Earnings: 2026-04-30
+WY    # Earnings: 2026-04-30
+XEL    # Earnings: 2026-04-30
+ALNY    # Earnings: 2026-04-30
+TEAM    # Earnings: 2026-04-30
