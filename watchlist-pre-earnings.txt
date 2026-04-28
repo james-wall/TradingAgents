@@ -1,21 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-27 14:03:17
+# Generated: 2026-04-28 14:20:50
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-27
-# Tickers: 163
+# Window: next 3 business days from 2026-04-28
+# Tickers: 165
 
-VZ    # Earnings: 2026-04-27
-ARE    # Earnings: 2026-04-27
-AVB    # Earnings: 2026-04-27
-BRO    # Earnings: 2026-04-27
-CDNS    # Earnings: 2026-04-27
-CINF    # Earnings: 2026-04-27
-DPZ    # Earnings: 2026-04-27
-NUE    # Earnings: 2026-04-27
-PSA    # Earnings: 2026-04-27
-UHS    # Earnings: 2026-04-27
-VTR    # Earnings: 2026-04-27
 KO    # Earnings: 2026-04-28
 SHW    # Earnings: 2026-04-28
 V    # Earnings: 2026-04-28
@@ -168,3 +157,16 @@ WY    # Earnings: 2026-04-30
 XEL    # Earnings: 2026-04-30
 ALNY    # Earnings: 2026-04-30
 TEAM    # Earnings: 2026-04-30
+CVX    # Earnings: 2026-05-01
+AON    # Earnings: 2026-05-01
+ARES    # Earnings: 2026-05-01
+CBOE    # Earnings: 2026-05-01
+CHD    # Earnings: 2026-05-01
+CL    # Earnings: 2026-05-01
+D    # Earnings: 2026-05-01
+EL    # Earnings: 2026-05-01
+FRT    # Earnings: 2026-05-01
+LIN    # Earnings: 2026-05-01
+LYB    # Earnings: 2026-05-01
+MRNA    # Earnings: 2026-05-01
+XOM    # Earnings: 2026-05-01
