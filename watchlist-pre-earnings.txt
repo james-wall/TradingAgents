@@ -1,58 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-04-28 14:20:50
+# Generated: 2026-04-29 14:06:59
 # Source: tickers.txt
-# Window: next 3 business days from 2026-04-28
-# Tickers: 165
+# Window: next 3 business days from 2026-04-29
+# Tickers: 126
 
-KO    # Earnings: 2026-04-28
-SHW    # Earnings: 2026-04-28
-V    # Earnings: 2026-04-28
-ALLE    # Earnings: 2026-04-28
-AMT    # Earnings: 2026-04-28
-AVY    # Earnings: 2026-04-28
-BEN    # Earnings: 2026-04-28
-BKNG    # Earnings: 2026-04-28
-BXP    # Earnings: 2026-04-28
-CMS    # Earnings: 2026-04-28
-CNC    # Earnings: 2026-04-28
-CSGP    # Earnings: 2026-04-28
-ECL    # Earnings: 2026-04-28
-EIX    # Earnings: 2026-04-28
-EQR    # Earnings: 2026-04-28
-ESS    # Earnings: 2026-04-28
-EXE    # Earnings: 2026-04-28
-EXR    # Earnings: 2026-04-28
-FE    # Earnings: 2026-04-28
-FFIV    # Earnings: 2026-04-28
-FICO    # Earnings: 2026-04-28
-GLW    # Earnings: 2026-04-28
-GM    # Earnings: 2026-04-28
-HLT    # Earnings: 2026-04-28
-HOOD    # Earnings: 2026-04-28
-IR    # Earnings: 2026-04-28
-INCY    # Earnings: 2026-04-28
-IVZ    # Earnings: 2026-04-28
-KMB    # Earnings: 2026-04-28
-MDLZ    # Earnings: 2026-04-28
-NXPI    # Earnings: 2026-04-28
-OKE    # Earnings: 2026-04-28
-OMC    # Earnings: 2026-04-28
-PCAR    # Earnings: 2026-04-28
-PNR    # Earnings: 2026-04-28
-PPG    # Earnings: 2026-04-28
-SBUX    # Earnings: 2026-04-28
-SPGI    # Earnings: 2026-04-28
-STX    # Earnings: 2026-04-28
-SYY    # Earnings: 2026-04-28
-TER    # Earnings: 2026-04-28
-TMUS    # Earnings: 2026-04-28
-UPS    # Earnings: 2026-04-28
-VLTO    # Earnings: 2026-04-28
-WELL    # Earnings: 2026-04-28
-WM    # Earnings: 2026-04-28
-XYL    # Earnings: 2026-04-28
-ZBH    # Earnings: 2026-04-28
 AMZN    # Earnings: 2026-04-29
 MSFT    # Earnings: 2026-04-29
 ABBV    # Earnings: 2026-04-29
@@ -170,3 +122,12 @@ LIN    # Earnings: 2026-05-01
 LYB    # Earnings: 2026-05-01
 MRNA    # Earnings: 2026-05-01
 XOM    # Earnings: 2026-05-01
+FANG    # Earnings: 2026-05-04
+L    # Earnings: 2026-05-04
+NCLH    # Earnings: 2026-05-04
+ON    # Earnings: 2026-05-04
+PLTR    # Earnings: 2026-05-04
+PNW    # Earnings: 2026-05-04
+TSN    # Earnings: 2026-05-04
+VRTX    # Earnings: 2026-05-04
+WMB    # Earnings: 2026-05-04
