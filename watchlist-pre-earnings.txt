@@ -1,23 +1,10 @@
 # Earnings Watchlist
 # Strategy: pre-earnings
-# Generated: 2026-05-01 13:26:47
+# Generated: 2026-05-04 14:10:54
 # Source: tickers.txt
-# Window: next 3 business days from 2026-05-01
-# Tickers: 105
+# Window: next 3 business days from 2026-05-04
+# Tickers: 126
 
-CVX    # Earnings: 2026-05-01
-AON    # Earnings: 2026-05-01
-ARES    # Earnings: 2026-05-01
-CBOE    # Earnings: 2026-05-01
-CHD    # Earnings: 2026-05-01
-CL    # Earnings: 2026-05-01
-D    # Earnings: 2026-05-01
-EL    # Earnings: 2026-05-01
-FRT    # Earnings: 2026-05-01
-LIN    # Earnings: 2026-05-01
-LYB    # Earnings: 2026-05-01
-MRNA    # Earnings: 2026-05-01
-XOM    # Earnings: 2026-05-01
 FANG    # Earnings: 2026-05-04
 L    # Earnings: 2026-05-04
 NCLH    # Earnings: 2026-05-04
@@ -110,3 +97,37 @@ TRMB    # Earnings: 2026-05-06
 UBER    # Earnings: 2026-05-06
 WBD    # Earnings: 2026-05-06
 ARM    # Earnings: 2026-05-06
+MCD    # Earnings: 2026-05-07
+AES    # Earnings: 2026-05-07
+AKAM    # Earnings: 2026-05-07
+BDX    # Earnings: 2026-05-07
+COIN    # Earnings: 2026-05-07
+CPAY    # Earnings: 2026-05-07
+CRL    # Earnings: 2026-05-07
+ED    # Earnings: 2026-05-07
+EPAM    # Earnings: 2026-05-07
+EXPE    # Earnings: 2026-05-07
+GEN    # Earnings: 2026-05-07
+GILD    # Earnings: 2026-05-07
+GWW    # Earnings: 2026-05-07
+HWM    # Earnings: 2026-05-07
+KVUE    # Earnings: 2026-05-07
+MCK    # Earnings: 2026-05-07
+MCHP    # Earnings: 2026-05-07
+MNST    # Earnings: 2026-05-07
+MSI    # Earnings: 2026-05-07
+MTD    # Earnings: 2026-05-07
+NWSA    # Earnings: 2026-05-07
+NWS    # Earnings: 2026-05-07
+RSG    # Earnings: 2026-05-07
+SRE    # Earnings: 2026-05-07
+TPR    # Earnings: 2026-05-07
+TRGP    # Earnings: 2026-05-07
+TTD    # Earnings: 2026-05-07
+VST    # Earnings: 2026-05-07
+VTRS    # Earnings: 2026-05-07
+WYNN    # Earnings: 2026-05-07
+ZTS    # Earnings: 2026-05-07
+FER    # Earnings: 2026-05-07
+INSM    # Earnings: 2026-05-07
+MELI    # Earnings: 2026-05-07
